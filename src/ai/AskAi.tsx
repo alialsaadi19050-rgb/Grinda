@@ -38,7 +38,7 @@ export function AskAi({ context, onClose }: { context: AskContext; onClose: () =
   const [withWork, setWithWork] = useState(true)
   useEffect(() => {
     if (!exerciseId) return
-    const check = () => loadDrawing(exerciseId).then((d) => setHasWork(!!d?.strokes.some((s) => s.tool === 'pen')))
+    const check = () => loadDrawing(exerciseId).then((d) => setHasWork(!!d?.strokes.some((s) => s.tool === 'pen') || !!d?.notes?.trim()))
     check()
     const t = setInterval(check, 3000)
     return () => clearInterval(t)
@@ -72,8 +72,10 @@ export function AskAi({ context, onClose }: { context: AskContext; onClose: () =
     abort.current = ctrl
     try {
       partial.current = ''
+      // Uträkningen som skrivits med tangentbordet följer med som text.
+      const notes = withWork && exerciseId ? (await loadDrawing(exerciseId))?.notes?.trim() : undefined
       const answer = await ask(
-        context,
+        context.kind === 'lesson' || !notes ? context : { ...context, notes },
         history,
         (t) => {
           partial.current = t
@@ -170,7 +172,7 @@ export function AskAi({ context, onClose }: { context: AskContext; onClose: () =
           {hasWork && (
             <label className="ai-work">
               <input type="checkbox" checked={withWork} onChange={(e) => setWithWork(e.target.checked)} />
-              Visa min uträkning från skrivytan
+              Visa min uträkning
               {withWork && provider === 'deepseek' && <span> · DeepSeek Flash läser bilden</span>}
             </label>
           )}

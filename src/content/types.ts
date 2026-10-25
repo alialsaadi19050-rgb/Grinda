@@ -28,6 +28,13 @@ export interface NumberAnswer {
   variable?: string
   /** Fler värden som också godkänns (t.ex. när facit misstänks vara fel). */
   alsoAccept?: string[]
+  /**
+   * Fysik: enheten som `value` anges i, t.ex. "N/m" eller "m/s^2". Svaret skrivs med tal och
+   * enhet, och alla enheter för samma storhet godkänns (t.ex. 0,07 kN/m).
+   */
+  unit?: string
+  /** Fysik: tillåten relativ avvikelse från `value`, t.ex. 0.02 (2 %). Standard 0,02 när `unit` finns. */
+  tol?: number
 }
 
 export interface ExpressionAnswer {
@@ -49,6 +56,8 @@ export interface ListAnswer {
   labels?: string[]
   /** Fler listor som också godkänns (t.ex. när det finns flera lösningar). */
   alsoAccept?: string[][]
+  /** Fysik: tillåten relativ avvikelse för varje tal (t.ex. 0.02), så att avrundade svar godkänns. */
+  tol?: number
 }
 
 export interface InequalityAnswer {
@@ -136,6 +145,8 @@ export interface Part {
   hint?: string
   /** Bokens lösning eller motivering (blå text). */
   solution?: string
+  /** Facit och lösning är egna (källan har inget facit för uppgiften). */
+  ownSolution?: boolean
   needsReview?: boolean
   reviewNote?: string
   reviewed?: boolean
@@ -151,7 +162,8 @@ export interface Exercise {
   section: string
   /** Delområde inom avsnittet, t.ex. "Lådprincipen". */
   topic?: string
-  level: Level
+  /** Utelämnas när boken inte anger någon nivå. */
+  level?: Level
   /** Bara för blandade övningar: Del I utan räknare / Del II med räknare. */
   calculator?: boolean
   /** Boksida där uppgiften står. */
@@ -175,6 +187,10 @@ export interface ContentIndex {
   chapters: {
     id: number
     title: string
+    /** Visas i stället för ”Kapitel {id}”, t.ex. ”Fysik 2 · kapitel 2”. */
+    label?: string
+    /** Kapitlet har inga sidbilder (då varnar inte npm run ingest). */
+    noPageImages?: boolean
     sections: { id: string; title: string; file: string }[]
   }[]
   /** Boksida → bildfil. */
@@ -202,6 +218,29 @@ export type LessonBlock =
   | { type: 'tip'; text: string }
   /** Historik eller fördjupning. */
   | { type: 'aside'; title: string; text: string }
+  /** En härledning: hopfälld från början, varje steg med en kort motivering. */
+  | { type: 'derivation'; title: string; intro?: string; steps: { math: string; why: string }[]; result?: string }
+  /** En animation av en rörelse, kraft eller process, med start/paus/återställ och reglage. */
+  | { type: 'animation'; anim: AnimationKind; caption: string; options?: Record<string, number | string | boolean> }
+
+export type AnimationKind =
+  | 'spring'
+  | 'spring-energy'
+  | 'pendulum'
+  | 'resonance'
+  | 'pulse-reflection'
+  | 'superposition'
+  | 'travelling-wave'
+  | 'standing-string'
+  | 'pipe'
+  | 'intensity'
+  | 'doppler'
+  | 'beats'
+  | 'water-wave'
+  | 'refraction'
+  | 'diffraction'
+  | 'interference'
+  | 'earthquake'
 
 /** Ett steg i ett exempel: text, eventuellt med en figur. */
 export type LessonStep = string | { text: string; figures?: Figure[] }

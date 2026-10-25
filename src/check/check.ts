@@ -5,6 +5,7 @@ import type { MathNode } from 'mathjs'
 import type { Answer, ChoiceAnswer, ExpressionAnswer, InequalityAnswer, ListAnswer, NumberAnswer, SetAnswer, SetExpressionAnswer } from '../content/types.ts'
 import { evalLog10, evalNumber, math, precisionOf, roundsTo } from '../math/expr.ts'
 import { compareSetExprs, evalSet, parseSetExpr, regions } from '../math/sets.ts'
+import { parseUnit, prettyUnit, sameDimension, splitQuantity } from './units.ts'
 
 export type CheckStatus = 'correct' | 'partial' | 'incorrect' | 'invalid'
 
@@ -34,6 +35,7 @@ export function tidy(raw: string): string {
     .replace(/[−–—]/g, '-')
     .replace(/[·×⋅∙]/g, '*')
     .replace(/÷/g, '/')
+    .replace(/π/g, 'pi')
     .replace(/≥/g, '>=')
     .replace(/≤/g, '<=')
     .replace(/…/g, '...')
@@ -169,7 +171,38 @@ function numberHint(u: number, t: number, decimal: boolean): string | undefined 
   return undefined
 }
 
+/**
+ * Fysiksvar med enhet. Talet räknas om till facits enhet och får avvika lite (avrundning,
+ * g = 9,82 eller 9,81). Fel enhet för storheten är fel svar; saknad enhet får man skriva till.
+ */
+export function checkQuantity(a: NumberAnswer & { unit: string }, raw: string): CheckResult {
+  const { number, unit } = splitQuantity(tidy(raw))
+  const expected = parseUnit(a.unit)
+  if (!expected) throw new Error(`Okänd enhet i facit: ${a.unit}`)
+  const p = parseNumber(number, a.noun, a.variable)
+  if ('error' in p) return invalid(p.error)
+  if (!unit) return invalid(`Skriv också enheten, t.ex. ${prettyUnit(a.unit)}.`)
+  const given = parseUnit(unit)
+  if (!given) return invalid(`Jag känner inte igen enheten ”${unit}”. Skriv t.ex. ${prettyUnit(a.unit)}.`)
+  if (!sameDimension(given, expected)) return wrong(`Enheten passar inte – svaret ska anges i t.ex. ${prettyUnit(a.unit)}.`, 'Fel enhet.')
+  const u = (p.value * given.factor) / expected.factor
+  const tol = a.tol ?? 0.02
+  const targets = [a.value, ...(a.alsoAccept ?? [])].map(evalNumber)
+  for (const t of targets) {
+    if (near(u, t) || Math.abs(u - t) <= tol * Math.abs(t) + 1e-15) return ok()
+    if (a.approx && t === targets[0] && roundsTo(u, a.approx)) return ok()
+  }
+  const t = targets[0]
+  if (t !== 0 && roughly(u, -t)) return wrong('Kolla tecknet – du har rätt belopp men fel tecken.')
+  for (const k of [1e3, 1e-3, 1e2, 1e-2, 1e6, 1e-6]) {
+    if (t !== 0 && Math.abs(u / t / k - 1) <= tol) return wrong('Talet är fel med en tiopotens. Kontrollera enhetsomvandlingen (t.ex. cm → m, g → kg).')
+  }
+  if (t !== 0 && Math.abs(u - t) / Math.abs(t) < 0.08) return wrong('Nära! Kontrollera avrundningen eller räkna med fler decimaler.')
+  return wrong()
+}
+
 export function checkNumber(a: NumberAnswer, raw: string): CheckResult {
+  if (a.unit) return checkQuantity(a as NumberAnswer & { unit: string }, raw)
   const p = parseNumber(raw, a.noun, a.variable)
   if ('error' in p) return invalid(p.error)
 
@@ -350,7 +383,12 @@ function checkListItems(a: ListAnswer, raw: string): CheckResult {
   const bad = parsed.find((p) => 'error' in p)
   if (bad && 'error' in bad) return invalid(bad.error)
   const nodes = parsed.map((p) => ('value' in p ? math.parse(String(p.value)) : (p as MathNode)))
-  const same = (n: MathNode, t: MathNode) => (vars.length ? equivalent(n, t, vars, false) : near(Number(n.evaluate()), Number(t.evaluate())))
+  const same = (n: MathNode, t: MathNode) => {
+    if (vars.length) return equivalent(n, t, vars, false)
+    const u = Number(n.evaluate())
+    const v = Number(t.evaluate())
+    return near(u, v) || (!!a.tol && Math.abs(u - v) <= a.tol * Math.abs(v))
+  }
 
   let matched = 0
   if (a.ordered) {
@@ -436,6 +474,10 @@ export function parseSet(raw: string): ParsedSet | { error: string } {
   if (/^(?:∅|Ø|\{\s*\}|tomma mängden|tom mängd|tom)$/i.test(s.replace(/^[A-Za-z∁]+\s*=\s*/, ''))) return { elements: [], infinite: false }
   if (s.includes('=') && s.includes('{')) s = s.slice(s.indexOf('=') + 1).trim()
   s = s.replace(/^\{/, '').replace(/\}$/, '')
+  // ”B och E”, ”A, B och C” – och/samt fungerar som kommatecken.
+  s = s.replace(/\s+(?:och|samt)\s+/gi, ',')
+  // Bara enstaka bokstäver med mellanslag: ”B E” → B, E.
+  if (/^[A-ZÅÄÖ](?:\s+[A-ZÅÄÖ])+$/.test(s)) s = s.split(/\s+/).join(',')
   const infinite = /\.\.\./.test(s)
   s = s.replace(/,?\s*\.\.\.\s*,?/g, ',').replace(/,\s*$/, '')
   // Semikolon som avgränsare betyder att kommatecken är decimalkomma: {−0,5; 0,5; 2}
@@ -509,7 +551,8 @@ const CHOICE_SYNONYMS: Record<string, string[]> = {
 
 export function checkChoice(a: ChoiceAnswer, raw: string): CheckResult {
   const s = tidy(raw).toLowerCase().replace(/[.!]$/, '')
-  const chosen = a.options.find((o) => o.toLowerCase() === s || (CHOICE_SYNONYMS[o.toLowerCase()] ?? []).includes(s) || s.startsWith(o.toLowerCase() + ','))
+  const norm = (o: string) => tidy(o).toLowerCase()
+  const chosen = a.options.find((o) => norm(o) === s || (CHOICE_SYNONYMS[o.toLowerCase()] ?? []).includes(s) || s.startsWith(norm(o) + ','))
   if (!chosen) return invalid(`Välj ett av: ${a.options.join(', ')}.`)
   return chosen === a.value ? ok() : wrong()
 }

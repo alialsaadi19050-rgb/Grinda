@@ -63,8 +63,20 @@ export async function loadDrawing(exerciseId: string): Promise<Drawing | undefin
 }
 
 export async function saveDrawing(d: Drawing): Promise<void> {
+  // Skrivytan känner inte till uträkningen som skrivs med tangentbordet – behåll den.
+  if (d.notes === undefined) {
+    const old = await db.drawings.get(d.exerciseId)
+    if (old?.notes) d = { ...d, notes: old.notes }
+  }
   await db.drawings.put(d)
   markDirty('doc', `drawing:${d.exerciseId}`)
+}
+
+/** Sparar uträkningen som skrivits med tangentbordet (läget utan ritplatta). */
+export async function saveNotes(exerciseId: string, notes: string): Promise<void> {
+  const old = await db.drawings.get(exerciseId)
+  await db.drawings.put({ exerciseId, strokes: old?.strokes ?? [], background: old?.background ?? 'grid', notes, updatedAt: Date.now() })
+  markDirty('doc', `drawing:${exerciseId}`)
 }
 
 export async function recordAttempt(a: Omit<Attempt, 'id' | 'at' | 'uid'>): Promise<string> {

@@ -23,6 +23,8 @@ const SYMBOLS: Record<string, string> = {
   ne: '!=',
   neq: '!=',
   pi: 'pi',
+  degree: '°',
+  mu: 'µ',
   ldots: '...',
   dots: '...',
   cdots: '...',

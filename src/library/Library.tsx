@@ -112,7 +112,7 @@ export function Library() {
         <Row title="Avsnitt" variant="posters">
           {topics.map((e) => (
             <a key={`${e.section}${e.topic}`} className="mk-poster-btn" href={`#/kapitel/${e.chapter}?avsnitt=${encodeURIComponent(e.section)}&omrade=${encodeURIComponent(e.topic ?? '')}`}>
-              <Poster motif={motifFor(e.topic)} seed={`${e.section}-${e.topic}`} kicker={e.section.includes('.') ? e.section : e.section.endsWith('blandade') ? 'Blandat' : `Kapitel ${e.chapter}`} title={e.topic ?? ''} />
+              <Poster motif={motifFor(e.topic)} seed={`${e.section}-${e.topic}`} kicker={e.section.includes('.') ? e.section : e.section.endsWith('blandade') ? 'Blandat' : (content.index.chapters.find((c) => c.id === e.chapter)?.label ?? `Kapitel ${e.chapter}`)} title={e.topic ?? ''} />
             </a>
           ))}
         </Row>
@@ -196,7 +196,7 @@ function Hero({ ex, progress, total }: { ex: Exercise; progress: Progress; total
           </h1>
           <p className="mk-hero-lead">{firstSentence(ex.prompt || ex.parts[0].prompt || '')}</p>
           <div className="mk-hero-meta">
-            <span className={`mk-lvl mk-lvl-${ex.level}`}>Nivå {ex.level.toUpperCase()}</span>
+            {ex.level && <span className={`mk-lvl mk-lvl-${ex.level}`}>Nivå {ex.level.toUpperCase()}</span>}
             <span>{ex.parts.length > 1 ? `${ex.parts.length} deluppgifter` : '1 uppgift'}</span>
             {p.done > 0 && <span>{Math.round(p.done * 100)} % klar</span>}
           </div>
@@ -325,7 +325,7 @@ export function Tile({ ex, progress }: { ex: Exercise; progress: Progress }) {
   const saved = !!useBookmarks()[ex.id]
   const fig = [...(ex.figures ?? []), ...ex.parts.flatMap((p) => p.figures ?? [])].find((f) => f.kind !== 'table')
   return (
-    <a className={`mk-tile st-${p.status} ${saved ? 'saved' : ''}`} href={exerciseHref(ex.id)} onClick={markTransition} aria-label={`Uppgift ${ex.number}, nivå ${ex.level}, ${STATUS_LABEL[p.status]}${saved ? ', sparad till senare' : ''}`}>
+    <a className={`mk-tile st-${p.status} ${saved ? 'saved' : ''}`} href={exerciseHref(ex.id)} onClick={markTransition} aria-label={`Uppgift ${ex.number}${ex.level ? `, nivå ${ex.level}` : ''}, ${STATUS_LABEL[p.status]}${saved ? ', sparad till senare' : ''}`}>
       <div className="mk-tile-card">
         <div className="mk-tile-thumb" aria-hidden="true">
           <MathText text={ex.prompt || ex.parts[0].prompt || ''} />
@@ -336,7 +336,7 @@ export function Tile({ ex, progress }: { ex: Exercise; progress: Progress }) {
           )}
         </div>
         <div className="mk-tile-shade" />
-        <span className={`mk-lvl mk-lvl-${ex.level}`}>{ex.level.toUpperCase()}</span>
+        {ex.level && <span className={`mk-lvl mk-lvl-${ex.level}`}>{ex.level.toUpperCase()}</span>}
         {p.status === 'correct' && (
           <span className="mk-badge ok">
             <Check size={14} strokeWidth={3} />

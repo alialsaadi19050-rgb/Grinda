@@ -2,6 +2,7 @@
 // Används både av `npm run ingest` och av granskningssidan innan något sparas.
 import type { Answer, Exercise, Figure } from './types.ts'
 import { evalAt, evalLog10, evalNumber, precisionOf, roundsTo } from '../math/expr.ts'
+import { parseUnit } from '../check/units.ts'
 import { compareSetExprs, parseConstraint, parseSetExpr, regions } from '../math/sets.ts'
 
 export interface Issue {
@@ -18,10 +19,10 @@ export function validateExercise(ex: Exercise, opts: { figureExists?: (src: stri
   const warn = (where: string, message: string) => issues.push({ level: 'warning', where, message })
   const id = ex.id ?? '?'
 
-  for (const key of ['id', 'number', 'chapter', 'section', 'level', 'page', 'facitPage', 'prompt', 'parts'] as const) {
+  for (const key of ['id', 'number', 'chapter', 'section', 'page', 'facitPage', 'prompt', 'parts'] as const) {
     if (ex[key] === undefined) err(id, `saknar fältet ”${key}”`)
   }
-  if (!['a', 'b', 'c'].includes(ex.level)) err(id, `okänd nivå ”${ex.level}”`)
+  if (ex.level !== undefined && !['a', 'b', 'c'].includes(ex.level)) err(id, `okänd nivå ”${ex.level}”`)
   if (!Array.isArray(ex.parts) || ex.parts.length === 0) {
     err(id, 'har inga deluppgifter')
     return issues
@@ -77,10 +78,12 @@ export function checkAnswer(a: Answer): string[] {
           const { log10 } = evalLog10(v)
           if (Number.isNaN(log10)) out.push(`värdet ”${v}” går inte att räkna ut`)
         }
+        if (a.unit && !parseUnit(a.unit)) out.push(`okänd enhet ”${a.unit}”`)
         if (a.approx !== undefined) {
           precisionOf(a.approx)
           const value = evalNumber(a.value)
-          if (Number.isFinite(value) && !roundsTo(value, a.approx)) {
+          const close = a.unit && Math.abs(value - Number(a.approx)) <= (a.tol ?? 0.02) * Math.abs(value)
+          if (Number.isFinite(value) && !roundsTo(value, a.approx) && !close) {
             out.push(`värdet ${a.value} = ${value} avrundas inte till facits ${a.approx}`)
           }
         }

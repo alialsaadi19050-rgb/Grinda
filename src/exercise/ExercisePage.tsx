@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { AnswerPanel } from './AnswerPanel.tsx'
+import { NotesPad } from './NotesPad.tsx'
 import { loadContent, type Content } from '../content/load.ts'
 import { MathText } from '../ui/MathText.tsx'
 import { Figures } from '../ui/Figure.tsx'
@@ -143,9 +144,46 @@ export function ExercisePage({ id }: { id: string }) {
     ? { position: 'fixed', left: zone.x, top: zone.y, width: zone.width, height: Math.round(zone.width / S620_ASPECT), flex: 'none', zIndex: 20 }
     : undefined
   const section = content.sections.find((s) => s.section === ex.section)
+  const plain = !settings.tablet
+  const lesson = lessons?.find((l) => l.topic === ex.topic)
+
+  // Uppgiften ser likadan ut i båda lägena – bara placeringen skiljer.
+  const problem = (
+    <>
+      <div className="ex-problem-text">
+        <MathText text={ex.prompt} />
+        <ol className="ex-parts">
+          {ex.parts.map((p, i) =>
+            p.label || p.prompt ? (
+              <li key={p.label ?? i} className={p.figures?.length ? 'has-fig' : ''}>
+                {p.label && <b>{p.label})</b>} <MathText text={p.prompt ?? ''} />
+                {p.figures?.length ? <Figures figures={p.figures} /> : null}
+              </li>
+            ) : null,
+          )}
+        </ol>
+      </div>
+      <Figures figures={ex.figures} />
+      {lesson && (
+        <a className="ex-lesson" href={lessonHref(lesson.id)} title="Läs bokens teori och exempel">
+          Genomgång: {lesson.title}
+        </a>
+      )}
+    </>
+  )
+  const answerPanel = (
+    <AnswerPanel
+      key={`${ex.id}-${round}`}
+      ex={ex}
+      panelRef={answers}
+      next={next}
+      onRedo={redo}
+      redoLabel={inSession && session ? `Repetition ${session.queue.indexOf(id) + 1} av ${session.queue.length}${next ? '' : ' – sista uppgiften!'}` : undefined}
+    />
+  )
 
   return (
-    <div className={`ex grain ${zone.enabled ? 'zone-mode' : ''}`}>
+    <div className={`ex grain ${zone.enabled && !plain ? 'zone-mode' : ''} ${plain ? 'plain' : ''}`}>
       <header className="ex-top">
         <a className="ex-back" href={`#/kapitel/${ex.chapter}?avsnitt=${encodeURIComponent(ex.section)}`}>
           <ChevronLeft size={18} /> {section ? (section.section.includes('.') ? `${section.section} ${section.title}` : section.title) : 'Tillbaka'}
@@ -166,7 +204,7 @@ export function ExercisePage({ id }: { id: string }) {
           <span className="ex-num" style={{ viewTransitionName: 'ex-num' }}>
             {ex.number}
           </span>
-          <span className={`mk-lvl mk-lvl-${ex.level}`}>{ex.level.toUpperCase()}</span>
+          {ex.level && <span className={`mk-lvl mk-lvl-${ex.level}`}>{ex.level.toUpperCase()}</span>}
           {ex.calculator !== undefined && <span className="ex-calc">{ex.calculator ? 'Med räknare' : 'Utan räknare'}</span>}
           <button
             className={`ex-bookmark ${bookmarks[ex.id] ? 'on' : ''}`}
@@ -179,6 +217,14 @@ export function ExercisePage({ id }: { id: string }) {
           </button>
         </div>
         <div className="ex-top-right">
+          <div className="ex-seg ex-mode-toggle" role="radiogroup" aria-label="Läge">
+            {([true, false] as const).map((t) => (
+              <button key={String(t)} role="radio" aria-checked={settings.tablet === t} className={settings.tablet === t ? 'on' : ''} onClick={() => updateSettings({ tablet: t })}>
+                {t ? 'Med ritplatta' : 'Utan ritplatta'}
+              </button>
+            ))}
+          </div>
+          {!plain && (
           <div className="ex-seg" role="radiogroup" aria-label="Papper">
             {(['light', 'dark'] as const).map((p) => (
               <button key={p} role="radio" aria-checked={settings.paper === p} className={settings.paper === p ? 'on' : ''} onClick={() => updateSettings({ paper: p })}>
@@ -186,6 +232,7 @@ export function ExercisePage({ id }: { id: string }) {
               </button>
             ))}
           </div>
+          )}
           <button className="ex-icon" onClick={() => updateSettings({ sound: !settings.sound })} aria-label={settings.sound ? 'Stäng av ljud' : 'Sätt på ljud'} title={settings.sound ? 'Ljud på' : 'Ljud av'}>
             {settings.sound ? <Sound size={19} /> : <Mute size={19} />}
           </button>
@@ -204,6 +251,15 @@ export function ExercisePage({ id }: { id: string }) {
         </div>
       </header>
 
+      {plain ? (
+        <div className="ex-plain">
+          <section className="ex-plain-problem" aria-label={`Uppgift ${ex.number}`}>
+            {problem}
+          </section>
+          {answerPanel}
+          <NotesPad exerciseId={ex.id} />
+        </div>
+      ) : (
       <div className="ex-body">
         <main className="ex-work" style={zone.enabled ? { paddingBottom: Math.max(0, window.innerHeight - zone.y) } : undefined}>
           <section className={`ex-problem ${problemOpen ? '' : 'closed'}`}>
@@ -211,46 +267,15 @@ export function ExercisePage({ id }: { id: string }) {
               <Collapse size={16} style={{ transform: problemOpen ? 'none' : 'rotate(180deg)' }} />
               {problemOpen ? 'Dölj uppgiften' : `Visa uppgift ${ex.number}`}
             </button>
-            <div className="ex-problem-body">
-              <div className="ex-problem-text">
-                <MathText text={ex.prompt} />
-                <ol className="ex-parts">
-                  {ex.parts.map((p, i) =>
-                    p.label || p.prompt ? (
-                      <li key={p.label ?? i} className={p.figures?.length ? 'has-fig' : ''}>
-                        {p.label && <b>{p.label})</b>} <MathText text={p.prompt ?? ''} />
-                        {p.figures?.length ? <Figures figures={p.figures} /> : null}
-                      </li>
-                    ) : null,
-                  )}
-                </ol>
-              </div>
-              <Figures figures={ex.figures} />
-              {(() => {
-                const lesson = lessons?.find((l) => l.topic === ex.topic)
-                return (
-                  lesson && (
-                    <a className="ex-lesson" href={lessonHref(lesson.id)} title="Läs bokens teori och exempel">
-                      Genomgång: {lesson.title}
-                    </a>
-                  )
-                )
-              })()}
-            </div>
+            <div className="ex-problem-body">{problem}</div>
           </section>
 
           <InkSurface ref={ink} exerciseId={ex.id} title={`Uppgift ${ex.number}`} paper={settings.paper} className="ex-ink" style={zoneStyle} />
         </main>
 
-        <AnswerPanel
-          key={`${ex.id}-${round}`}
-          ex={ex}
-          panelRef={answers}
-          next={next}
-          onRedo={redo}
-          redoLabel={inSession && session ? `Repetition ${session.queue.indexOf(id) + 1} av ${session.queue.length}${next ? '' : ' – sista uppgiften!'}` : undefined}
-        />
+        {answerPanel}
       </div>
+      )}
 
       <Calculator open={calcOpen} onClose={() => setCalcOpen(false)} noCalculator={ex.calculator === false} />
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}

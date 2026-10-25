@@ -228,7 +228,7 @@ async function askDeepSeek(key: string, history: ChatMessage[], onText: (snapsho
 
 /* ---------- Frågan ---------- */
 
-const SYSTEM = `Du är en tålmodig och varm mattelärare för en svensk gymnasieelev som läser Matematik 5 (kapitlet Diskret matematik: kombinatorik och mängdlära). Eleven räknar uppgifter i en övningsapp och undrar varför ett svar blir som det blir.
+const SYSTEM = `Du är en tålmodig och varm lärare i matte och fysik för en svensk gymnasieelev. Eleven övar i en app med Matematik 5 (Diskret matematik: kombinatorik och mängdlära) och Fysik 2 (Impuls 2, kapitel 2: Ljud och andra mekaniska vågor). Eleven undrar varför ett svar blir som det blir.
 
 Så här svarar du:
 - Svara alltid på svenska, kort och tydligt. Börja med det viktigaste. Använd vanligtvis högst 150–250 ord, om eleven inte ber om mer.
@@ -238,6 +238,7 @@ Så här svarar du:
 - Om facit är visat eller uppgiften löst: förklara hela lösningen steg för steg.
 - Om du tror att bokens facit är fel, säg det och förklara varför.
 - Ibland bifogar eleven en bild av sin handskrivna uträkning. Läs den noga och utgå från den: säg vad som är rätt, och peka ut exakt vilket steg eller vilken rad som går fel (citera det eleven skrev). Är något svårläst, säg hur du tolkar det.
+- I fysikuppgifter: skriv alltid ut enheter, räkna med g = 9,82 m/s² och ljudhastigheten 340 m/s i luft om inget annat anges (som boken), och förklara vilken formel som används och varför.
 - Ibland läser eleven en genomgång (teori och exempel) i stället för en uppgift. Förklara då begreppen med egna ord, gärna med ett nytt enkelt exempel, och koppla till genomgångens regler.
 
 Formatering (texten visas med en enkel renderare):
@@ -263,6 +264,8 @@ export interface TaskContext {
   feedback?: { status: string; message: string; hint?: string }
   solved: boolean
   facitShown: boolean
+  /** Uträkning som eleven skrivit med tangentbordet. */
+  notes?: string
 }
 
 const STATUS: Record<string, string> = { correct: 'rätt', partial: 'nästan rätt', incorrect: 'fel', invalid: 'gick inte att tolka' }
@@ -271,7 +274,7 @@ const STATUS: Record<string, string> = { correct: 'rätt', partial: 'nästan rä
 export function describeTask(c: AskContext): string {
   if (c.kind === 'lesson') return describeLesson(c.lesson)
   const { ex, part } = c
-  const lines = [`Uppgift ${ex.number} (avsnitt ${ex.section}${ex.topic ? `, ${ex.topic}` : ''}, nivå ${ex.level.toUpperCase()}${ex.calculator === false ? ', utan räknare' : ''}).`, '', ex.prompt]
+  const lines = [`Uppgift ${ex.number} (avsnitt ${ex.section}${ex.topic ? `, ${ex.topic}` : ''}, ${ex.level ? `nivå ${ex.level.toUpperCase()}` : 'ingen nivå angiven'}${ex.calculator === false ? ', utan räknare' : ''}).`, '', ex.prompt]
   if (ex.figures?.length) lines.push(...ex.figures.map((f) => `Figur: ${f.alt}`))
   if (ex.parts.length > 1 || part.label) lines.push('', `Deluppgift ${part.label ?? ''}: ${part.prompt ?? ''}`)
   if (part.figures?.length) lines.push(...part.figures.map((f) => `Figur till deluppgiften: ${f.alt}`))
@@ -286,6 +289,7 @@ export function describeTask(c: AskContext): string {
   } else {
     lines.push('Eleven har inte svarat än.')
   }
+  if (c.notes) lines.push('', 'Elevens uträkning (skriven med tangentbordet):', c.notes, '')
   if (c.feedback) lines.push(`Appens rättning sa: ”${c.feedback.message}”${c.feedback.hint ? ` Tips: ”${c.feedback.hint}”` : ''}`)
   lines.push(c.solved ? 'Eleven har löst uppgiften.' : c.facitShown ? 'Eleven har tittat på facit.' : 'Eleven har inte sett facit än – avslöja inte slutsvaret.')
   return lines.join('\n')
@@ -300,6 +304,8 @@ function describeLesson(l: Lesson): string {
     else if (b.type === 'rule') lines.push(`Regel – ${b.title}: ${b.text}`)
     else if (b.type === 'example') lines.push(`Exempel – ${b.title}: ${b.prompt}\nLösning: ${b.steps.map((s) => (typeof s === 'string' ? s : s.text)).join(' ')}`)
     else if (b.type === 'check') lines.push(`Testfråga: ${b.prompt} (lösning: ${b.solution})`)
+    else if (b.type === 'derivation') lines.push(`Härledning – ${b.title}: ${b.steps.map((st) => `${st.math} (${st.why})`).join(' ')}`)
+    else if (b.type === 'animation') lines.push(`Animation: ${b.caption}`)
     lines.push('')
   }
   return lines.join('\n')

@@ -11,6 +11,8 @@ import { Check, ChevronRight, Lightbulb, Sparkle } from '../design/icons.tsx'
 import { AskAi } from '../ai/AskAi.tsx'
 import { MaxBackdrop, MaxButton, useMaximize } from '../ui/Maximize.tsx'
 import { updateSettings, useSettings } from '../settings/settings.ts'
+import { KeyHelper, UNIT_SYMBOLS } from '../check/KeyHelper.tsx'
+import { prettyUnit, splitQuantity } from '../check/units.ts'
 
 const MAX_TRIES = 3
 
@@ -164,8 +166,15 @@ function AnswerField({ ex, index, part, previous, onSolved, onAttempt }: { ex: E
     return w?.uid ? { uid: w.uid, input: w.input } : null
   })
   const field = useRef<MathInputHandle>(null)
+  const unitRef = useRef<HTMLInputElement>(null)
+  /** Rutan som teckenhjälpen skriver i (den senast använda). */
+  const lastBox = useRef<number>(-1)
   const box = useRef<HTMLDivElement>(null)
   const correct = solvedInput !== null
+  /** Fysiksvar skrivs som tal + enhet i två rutor. */
+  const unit = part.answer.type === 'number' ? part.answer.unit : undefined
+  const solvedSplit = unit && solvedInput ? splitQuantity(solvedInput) : null
+  const plain = !settings.tablet
 
   // Starta om skak- eller glödanimationen vid varje nytt besked, utan att tappa det du skrivit.
   useEffect(() => {
@@ -220,11 +229,28 @@ function AnswerField({ ex, index, part, previous, onSolved, onAttempt }: { ex: E
     setFeedback({ status: 'correct', message, key: Date.now() })
     onSolved()
     if (settings.sound) playChime('correct', tries)
+    // Utan ritplatta: fortsätt direkt i nästa svarsruta som inte är klar.
+    if (plain) {
+      setTimeout(() => {
+        const fields = [...(box.current?.parentElement?.querySelectorAll<HTMLElement>('.ex-field') ?? [])]
+        const next = fields.slice(fields.indexOf(box.current!) + 1).find((f) => !f.classList.contains('solved'))
+        next?.querySelector<HTMLElement>('math-field, input:not([readonly]), .ex-choices button, .ex-check')?.focus()
+      }, 60)
+    }
   }
 
   const submit = (raw?: string) => {
     if (correct) return
     let input = raw ?? (drawMode ? vennExpr(venn) : field.current?.plain()) ?? ''
+    if (raw === undefined && unit) {
+      const u = unitRef.current?.value.trim() ?? ''
+      if (input.trim() && !u && !/[A-Za-zµ°]\s*$/.test(input.trim())) {
+        setFeedback({ status: 'invalid', message: `Skriv också enheten, t.ex. ${prettyUnit(unit)}.`, key: Date.now() })
+        unitRef.current?.focus()
+        return
+      }
+      input = `${input.trim()} ${u}`.trim()
+    }
     if (raw === undefined && boxes) {
       const parts = Array.from({ length: boxes }, (_, i) => boxRefs.current[i]?.plain().trim() ?? '')
       if (parts.some((p) => !p)) {
@@ -360,7 +386,10 @@ function AnswerField({ ex, index, part, previous, onSolved, onAttempt }: { ex: E
                       readOnly={correct}
                       label={`Svar ${part.label ?? ''} del ${i + 1}`}
                       onEnter={() => (i < boxes - 1 ? boxRefs.current[i + 1]?.focus() : submit())}
-                      onInput={() => feedback?.status === 'invalid' && setFeedback(null)}
+                      onInput={() => {
+                        lastBox.current = i
+                        if (feedback?.status === 'invalid') setFeedback(null)
+                      }}
                     />
                   </div>
                 </label>
@@ -372,18 +401,38 @@ function AnswerField({ ex, index, part, previous, onSolved, onAttempt }: { ex: E
               )}
             </div>
           ) : (
-          <div className="ex-input">
+          <div className={`ex-input ${unit ? 'with-unit' : ''}`}>
             <MathInput
               ref={field}
               mode={textMode === 'text' ? 'text' : 'math'}
-              initial={solvedInput ?? ''}
+              initial={(solvedSplit ? solvedSplit.number : solvedInput) ?? ''}
               readOnly={correct}
-              label={`Svar ${part.label ?? ''}`}
-              placeholder={kind.placeholder}
+              label={`Svar ${part.label ?? ''}${unit ? ' (tal)' : ''}`}
+              placeholder={unit ? 'Tal' : kind.placeholder}
               symbols={kind.symbols}
-              onEnter={() => submit()}
+              onEnter={() => (unit && !unitRef.current?.value.trim() ? unitRef.current?.focus() : submit())}
               onInput={() => feedback?.status === 'invalid' && setFeedback(null)}
             />
+            {unit && (
+              <input
+                ref={unitRef}
+                className="ex-unit-input"
+                defaultValue={solvedSplit?.unit ?? ''}
+                readOnly={correct}
+                aria-label={`Enhet ${part.label ?? ''}`}
+                placeholder="Enhet"
+                spellCheck={false}
+                autoComplete="off"
+                autoCapitalize="off"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    submit()
+                  }
+                }}
+                onInput={() => feedback?.status === 'invalid' && setFeedback(null)}
+              />
+            )}
             {part.answer.type === 'number' && part.answer.noun && <span className="ex-unit">{part.answer.noun}</span>}
             {correct && (
               <span className="ex-ok">
@@ -403,6 +452,35 @@ function AnswerField({ ex, index, part, previous, onSolved, onAttempt }: { ex: E
         </>
       )}
 
+      {plain && !correct && (kind.mode === 'math' || unit) && !drawMode && (
+        <div className="ex-helpers">
+          <KeyHelper target={() => (boxes ? boxRefs.current[Math.max(0, lastBox.current)] : field.current)} />
+          {unit && (
+            <div className="ex-keyhelp unit" role="toolbar" aria-label="Tecken för enheten">
+              <span>Enhet:</span>
+              {UNIT_SYMBOLS.map((sym) => (
+                <button
+                  key={sym}
+                  type="button"
+                  tabIndex={-1}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    const el = unitRef.current
+                    if (!el) return
+                    const a = el.selectionStart ?? el.value.length
+                    const b = el.selectionEnd ?? el.value.length
+                    el.value = el.value.slice(0, a) + sym + el.value.slice(b)
+                    el.focus()
+                    el.setSelectionRange(a + sym.length, a + sym.length)
+                  }}
+                >
+                  {sym}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {hasVariables && textMode === 'math' && !correct && <p className="ex-exp-tip">Tips: tryck → (högerpil) för att komma ut ur en exponent.</p>}
       {feedback && <p className={`ex-msg ${feedback.status}`}>{feedback.message}</p>}
       {feedback?.hint && !correct && <p className="ex-msg tip">{feedback.hint}</p>}
@@ -449,7 +527,8 @@ function AnswerField({ ex, index, part, previous, onSolved, onAttempt }: { ex: E
               <MathText text={[ex.prompt, part.prompt].filter(Boolean).join('\n\n')} />
             </div>
           )}
-          <MathText text={`**Facit:** ${part.facit}`} />
+          {part.ownSolution && <p className="ex-own">Egen lösning – källan har inget facit för den här uppgiften.</p>}
+          <MathText text={`**${part.ownSolution ? 'Svar' : 'Facit'}:** ${part.facit}`} />
           <Figures figures={part.facitFigures} />
           {part.solution && <MathText className="ex-solution" text={part.solution} />}
         </div>

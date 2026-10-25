@@ -53,7 +53,7 @@ export function ChapterPage({ chapterId }: { chapterId: number }) {
       (!section || e.section === section) &&
       (!topic || e.topic === topic) &&
       (status === 'all' || matches(e.id, status)) &&
-      (!levels.size || levels.has(e.level)),
+      (!levels.size || (!!e.level && levels.has(e.level))),
   )
   const topics = [...new Set(all.filter((e) => !section || e.section === section).map((e) => e.topic).filter(Boolean))] as string[]
   const groups = content.sections
@@ -76,12 +76,12 @@ export function ChapterPage({ chapterId }: { chapterId: number }) {
               <nav className="ch-chapters" aria-label="Kapitel">
                 {content.index.chapters.map((c) => (
                   <a key={c.id} className={c.id === chapter.id ? 'on' : ''} href={`#/kapitel/${c.id}`}>
-                    Kapitel {c.id}
+                    {c.label ?? `Kapitel ${c.id}`}
                   </a>
                 ))}
               </nav>
             ) : (
-              <p className="mk-kicker">Kapitel {chapter.id}</p>
+              <p className="mk-kicker">{chapter.label ?? `Kapitel ${chapter.id}`}</p>
             )}
             <h1 className="ch-title">{chapter.title}</h1>
             <p className="mk-hero-lead">

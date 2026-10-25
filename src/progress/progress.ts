@@ -56,7 +56,7 @@ const startOfDay = (t: number) => {
 }
 
 /** Ren funktion så att den går att testa. */
-export function computeProgress(exercises: Exercise[], attempts: Attempt[], drawings: Pick<Drawing, 'exerciseId' | 'strokes' | 'updatedAt'>[], now = Date.now()): Progress {
+export function computeProgress(exercises: Exercise[], attempts: Attempt[], drawings: Pick<Drawing, 'exerciseId' | 'strokes' | 'updatedAt' | 'notes'>[], now = Date.now()): Progress {
   attempts = resolveOverrides(attempts)
   const byEx = new Map<string, Attempt[]>()
   for (const a of attempts) {
@@ -64,7 +64,7 @@ export function computeProgress(exercises: Exercise[], attempts: Attempt[], draw
     list.push(a)
     byEx.set(a.exerciseId, list)
   }
-  const drawn = new Map(drawings.filter((d) => d.strokes.length).map((d) => [d.exerciseId, d.updatedAt]))
+  const drawn = new Map(drawings.filter((d) => d.strokes.length || d.notes?.trim()).map((d) => [d.exerciseId, d.updatedAt]))
 
   const byExercise: Record<string, ExerciseProgress> = {}
   let firstTries = 0

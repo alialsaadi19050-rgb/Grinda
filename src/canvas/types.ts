@@ -34,6 +34,8 @@ export interface Drawing {
   exerciseId: string
   strokes: Stroke[]
   background: Background
+  /** Uträkning skriven med tangentbordet (läget utan ritplatta). */
+  notes?: string
   updatedAt: number
 }
 

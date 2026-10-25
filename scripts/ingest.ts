@@ -26,8 +26,8 @@ for (const chapter of index.chapters) {
       all.push(ex)
       issues.push(...validateExercise(ex, { figureExists: (src) => existsSync(join(ROOT, src)) }))
       // Sida 0: uppgiften kommer inte från boken.
-      if (ex.page && !index.pages[String(ex.page)]) issues.push({ level: 'warning', where: ex.id, message: `ingen bild för boksida ${ex.page}` })
-      if (ex.facitPage && !index.facitPages[String(ex.facitPage)]) issues.push({ level: 'warning', where: ex.id, message: `ingen bild för facitsida ${ex.facitPage}` })
+      if (ex.page && !chapter.noPageImages && !index.pages[String(ex.page)]) issues.push({ level: 'warning', where: ex.id, message: `ingen bild för boksida ${ex.page}` })
+      if (ex.facitPage && !chapter.noPageImages && !index.facitPages[String(ex.facitPage)]) issues.push({ level: 'warning', where: ex.id, message: `ingen bild för facitsida ${ex.facitPage}` })
     }
   }
 }

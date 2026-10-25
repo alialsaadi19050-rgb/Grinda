@@ -5,6 +5,7 @@ import type { Exercise, LessonBlock } from '../content/types.ts'
 import { lessonHref, practiceHref, useLessons } from './data.ts'
 import { checkAnswer, type CheckStatus } from '../check/check.ts'
 import { MathInput, type MathInputHandle } from '../check/MathInput.tsx'
+import { Animation } from './anim/index.tsx'
 import { inputKind } from '../exercise/AnswerPanel.tsx'
 import { AskAi } from '../ai/AskAi.tsx'
 import { MathText } from '../ui/MathText.tsx'
@@ -162,7 +163,55 @@ function Block({ block: b, solved, onSolved }: { block: LessonBlock; solved: boo
           <MathText text={b.text} />
         </aside>
       )
+    case 'derivation':
+      return <Derivation block={b} />
+    case 'animation':
+      return (
+        <figure className="ls-anim">
+          <Animation kind={b.anim} caption={b.caption} options={b.options} />
+          <figcaption>
+            <MathText text={b.caption} />
+          </figcaption>
+        </figure>
+      )
   }
+}
+
+/** En härledning: hopfälld från början så att man kan hoppa över den. */
+function Derivation({ block: b }: { block: Extract<LessonBlock, { type: 'derivation' }> }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section className={`ls-deriv ${open ? 'open' : ''}`}>
+      <button className="ls-deriv-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <svg className="ls-deriv-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M4 19h4v-4h4v-4h4V7h4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M17 4h3v3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="ls-deriv-label">Härledning</span>
+        <span className="ls-deriv-title">{b.title}</span>
+        <span className="ls-deriv-toggle">{open ? 'Dölj' : 'Visa'}</span>
+      </button>
+      {open && (
+        <div className="ls-deriv-body">
+          {b.intro && <MathText text={b.intro} />}
+          <ol className="ls-deriv-steps">
+            {b.steps.map((st, i) => (
+              <li key={i}>
+                <MathText className="ls-deriv-math" text={st.math} />
+                <MathText className="ls-deriv-why" text={st.why} />
+              </li>
+            ))}
+          </ol>
+          {b.result && (
+            <div className="ls-deriv-result">
+              <MathText text={b.result} />
+            </div>
+          )}
+        </div>
+      )}
+      {!open && <p className="ls-deriv-skip">Härledningen visar varför formeln gäller. Du kan hoppa över den.</p>}
+    </section>
+  )
 }
 
 function Example({ block: b }: { block: Extract<LessonBlock, { type: 'example' }> }) {

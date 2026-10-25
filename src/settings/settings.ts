@@ -97,6 +97,8 @@ export interface Settings {
   calculatorMode?: 'simple' | 'ti84'
   /** TI-84-emulatorns storlek (1 = 780 px hög). */
   tiScale?: number
+  /** Med ritplatta: skrivyta bredvid uppgiften. Utan: allt i en centrerad kolumn och uträkningar med tangentbordet. */
+  tablet: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -109,6 +111,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pressureHintDismissed: false,
   inputMode: 'math',
   lowLatency: true,
+  tablet: true,
 }
 
 const KEY = 'matte.settings.v1'

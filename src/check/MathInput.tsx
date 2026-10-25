@@ -34,6 +34,8 @@ export interface MathInputHandle {
   /** Det inskrivna som vanlig text, redo för rättning. */
   plain: () => string
   clear: () => void
+  /** Sätter in ett tecken eller en mall där markören står (mattefältet tar LaTeX, textrutan text). */
+  insert: (latex: string, text: string) => void
 }
 
 interface Props {
@@ -99,6 +101,12 @@ export const MathInput = forwardRef<MathInputHandle, Props>(function MathInput({
     clear: () => {
       if (mf.current) mf.current.value = ''
       if (text.current) text.current.value = ''
+    },
+    insert: (latex, plainText) => {
+      if (mode === 'math' && mf.current) {
+        mf.current.insert(latex, { focus: true, selectionMode: 'placeholder', format: 'latex' })
+        input.current?.()
+      } else insert(plainText)
     },
   }))
 
