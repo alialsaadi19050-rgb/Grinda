@@ -82,8 +82,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.png'],
       manifest: {
-        name: 'Matte',
-        short_name: 'Matte',
+        name: 'Grinda.',
+        short_name: 'Grinda',
         description: 'Räkna uppgifterna i din mattebok med ritplatta och få rättning direkt.',
         lang: 'sv',
         start_url: '.',

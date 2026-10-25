@@ -27,7 +27,7 @@ export function Login() {
         }}
       >
         <div className="lg-logo">
-          matte<span>.</span>
+          grinda<span>.</span>
         </div>
         <p className="lg-sub">Logga in för att öppna boken.</p>
         <label>

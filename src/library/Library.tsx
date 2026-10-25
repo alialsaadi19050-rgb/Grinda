@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { filterContent, subjectName, useSubject } from '../subject/subject.ts'
 import type { Exercise } from '../content/types.ts'
 import { loadContent, type Content } from '../content/load.ts'
 import { CoverArt, Poster, motifFor } from '../design/Cover.tsx'
@@ -16,13 +17,15 @@ import './library.css'
 
 /** Innehållet laddas en gång och delas av biblioteket och kapitelsidan. */
 let contentPromise: Promise<Content> | null = null
-export function useContent() {
+/** Bokens innehåll. Som standard bara det valda ämnets kapitel (Fysik 2 eller Matte 5). */
+export function useContent(scope: 'subject' | 'all' = 'subject') {
   const [content, setContent] = useState<Content | null>(null)
+  const subject = useSubject()
   useEffect(() => {
     contentPromise ??= loadContent()
     contentPromise.then(setContent)
   }, [])
-  return content
+  return useMemo(() => (content && scope === 'subject' ? filterContent(content, subject) : content), [content, scope, subject])
 }
 
 export const exerciseHref = (id: string) => `#/uppgift/${encodeURIComponent(id)}`
@@ -44,7 +47,7 @@ export function markTransition(e: React.MouseEvent<HTMLElement>) {
 export function Library() {
   const content = useContent()
   const bookmarks = useBookmarks()
-  const lessons = useLessons()
+  const lessons = useLessons()?.filter((l) => content?.index.chapters.some((c) => c.id === l.chapter))
   const lp = useLessonProgress()
   const progress = useProgress(content?.exercises)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -147,16 +150,22 @@ export function Library() {
 }
 
 export function Nav({ streak, onSettings, active }: { streak: number; onSettings: () => void; active: 'home' | 'chapter' | 'learn' | 'stats' }) {
+  const subject = useSubject()
+  const content = useContent()
+  const firstChapter = content?.index.chapters[0]?.id ?? (subject === 'fysik' ? 102 : 1)
   return (
     <header className="mk-nav">
-      <a className="mk-logo" href="#/">
-        matte<span>.</span>
+      <a className="mk-logo" href="#/" title="Byt ämne">
+        grinda<span>.</span>
+      </a>
+      <a className="mk-subject" href="#/" title="Byt ämne">
+        {subjectName(subject)} <span aria-hidden="true">⇄</span>
       </a>
       <nav>
-        <a className={active === 'home' ? 'on' : ''} href="#/">
+        <a className={active === 'home' ? 'on' : ''} href="#/hem">
           Hem
         </a>
-        <a className={active === 'chapter' ? 'on' : ''} href="#/kapitel/1">
+        <a className={active === 'chapter' ? 'on' : ''} href={`#/kapitel/${firstChapter}`}>
           Kapitel
         </a>
         <a className={active === 'learn' ? 'on' : ''} href="#/lar">

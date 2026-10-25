@@ -4,6 +4,7 @@ import { Library } from './library/Library.tsx'
 import { ChapterPage } from './library/ChapterPage.tsx'
 import { StatsPage } from './library/StatsPage.tsx'
 import { Login } from './vault/Login.tsx'
+import { SubjectPicker } from './subject/SubjectPicker.tsx'
 import { restoreSession, useVaultStatus } from './vault/vault.ts'
 
 // Uppgiftssidan (skrivyta, mattefält) och granskningen laddas först när de behövs.
@@ -71,5 +72,6 @@ function Routes() {
     )
   if (route.startsWith('kapitel')) return <ChapterPage key={location.hash} chapterId={Number(route.split('/')[1] ?? 1) || 1} />
   if (route === 'statistik') return <StatsPage />
-  return <Library />
+  if (route === 'hem') return <Library />
+  return <SubjectPicker />
 }

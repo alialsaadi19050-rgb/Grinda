@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { setSubject, subjectOf } from '../subject/subject.ts'
+import { useEffect, useMemo, useState } from 'react'
 import type { Level } from '../content/types.ts'
 import { CoverArt } from '../design/Cover.tsx'
 import { ThemeEditor } from '../design/ThemeEditor.tsx'
@@ -29,6 +30,12 @@ function readQuery() {
 
 export function ChapterPage({ chapterId }: { chapterId: number }) {
   const content = useContent()
+  const everything = useContent('all')
+  // En länk till ett kapitel i det andra ämnet byter ämne.
+  useEffect(() => {
+    const c = everything?.index.chapters.find((x) => x.id === chapterId)
+    if (c) setSubject(subjectOf(c))
+  }, [everything, chapterId])
   const progress = useProgress(content?.exercises)
   const bookmarks = useBookmarks()
   const lessons = useLessons()

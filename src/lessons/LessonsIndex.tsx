@@ -12,8 +12,8 @@ import '../library/library.css'
 import './lessons.css'
 
 export function LessonsIndex() {
-  const lessons = useLessons()
   const content = useContent()
+  const lessons = useLessons()?.filter((l) => content?.index.chapters.some((c) => c.id === l.chapter))
   const progress = useProgress(content?.exercises)
   const lp = useLessonProgress()
   const [settingsOpen, setSettingsOpen] = useState(false)

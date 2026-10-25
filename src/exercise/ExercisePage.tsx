@@ -193,7 +193,7 @@ export function ExercisePage({ id }: { id: string }) {
             className="ex-redo-end"
             onClick={() => {
               endRedoSession()
-              location.hash = '#/'
+              location.hash = '#/hem'
             }}
             title="Avsluta repetitionen"
           >

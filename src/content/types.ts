@@ -189,6 +189,8 @@ export interface ContentIndex {
     title: string
     /** Visas i stället för ”Kapitel {id}”, t.ex. ”Fysik 2 · kapitel 2”. */
     label?: string
+    /** Ämne: 'matte' (standard) eller 'fysik'. Startsidan delar upp kapitlen efter ämne. */
+    subject?: 'matte' | 'fysik'
     /** Kapitlet har inga sidbilder (då varnar inte npm run ingest). */
     noPageImages?: boolean
     sections: { id: string; title: string; file: string }[]
