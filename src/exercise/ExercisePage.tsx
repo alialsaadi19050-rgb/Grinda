@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { AnswerPanel } from './AnswerPanel.tsx'
 import { NotesPad } from './NotesPad.tsx'
+import { setSubject, subjectOf } from '../subject/subject.ts'
 import { loadContent, type Content } from '../content/load.ts'
 import { MathText } from '../ui/MathText.tsx'
 import { Figures } from '../ui/Figure.tsx'
@@ -40,7 +41,11 @@ export function ExercisePage({ id }: { id: string }) {
   }, [])
 
   const { ex, prev, next } = useMemo(() => {
-    const list = content?.exercises ?? []
+    // Föregående och nästa går bara genom uppgifterna i samma ämne.
+    const self = content?.exercises.find((e) => e.id === id)
+    const chapter = content?.index.chapters.find((c) => c.id === self?.chapter)
+    const same = new Set(content?.index.chapters.filter((c) => chapter && subjectOf(c) === subjectOf(chapter)).map((c) => c.id))
+    const list = (content?.exercises ?? []).filter((e) => !chapter || same.has(e.chapter))
     const i = list.findIndex((e) => e.id === id)
     // I en repetition går Nästa och Föregående genom repetitionens uppgifter.
     if (session && inSession) {
@@ -50,6 +55,12 @@ export function ExercisePage({ id }: { id: string }) {
     }
     return { ex: list[i], prev: list[i - 1], next: list[i + 1] }
   }, [content, id, session, inSession])
+
+  // Öppnar man en uppgift i det andra ämnet byter appen ämne.
+  useEffect(() => {
+    const c = content?.index.chapters.find((x) => x.id === ex?.chapter)
+    if (c) setSubject(subjectOf(c))
+  }, [content, ex?.chapter])
 
   const redo = async (blank: boolean) => {
     await startRedo(id)
