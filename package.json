@@ -12,6 +12,7 @@
     "typecheck": "tsc -b",
     "build:ti84": "bash scripts/ti84/build.sh",
     "lock": "node scripts/lock.ts",
+    "publicera": "node scripts/publish.ts",
     "unlock": "node scripts/unlock.ts",
     "users": "node scripts/users.ts"
   },

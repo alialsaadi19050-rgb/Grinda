@@ -6,7 +6,8 @@
 //   npm run users -- count    visa hur många inloggningar boken har
 import { makeSlot, slotId } from '../src/vault/crypto.ts'
 import { ask } from './prompt.ts'
-import { askNewLogin, openWithLogin, readVault, writeVault } from './vaultfile.ts'
+import type { VaultFiles } from '../src/vault/crypto.ts'
+import { askNewLogin, openWithLogin, openWithSavedKey, readVault, writeVault } from './vaultfile.ts'
 
 const cmd = process.argv[2]
 const vault = readVault()
@@ -17,14 +18,20 @@ if (cmd === 'count') {
   console.log(`Boken har ${vault.slots.length} ${vault.slots.length === 1 ? 'inloggning' : 'inloggningar'}.`)
   console.log('Konton som skapats med inbjudningskod ligger på servern och syns i appen under Inställningar → Bjud in.')
 } else if (cmd === 'add') {
-  console.log('\nSTEG 1 av 2: logga in med DITT konto (ett som redan finns, t.ex. ditt eget).')
-  const me = await openWithLogin(vault, 'ditt befintliga konto')
-  console.log('\nSTEG 2 av 2: skriv det NYA kontots användarnamn och lösenord.')
+  // Med en sparad boknyckel behöver du inte logga in först.
+  const saved = await openWithSavedKey(vault)
+  const me: { files: VaultFiles; bookKey: Uint8Array | null; user?: string; password?: string } = saved ?? (await (async () => {
+    console.log('\nSTEG 1 av 2: logga in med DITT konto (ett som redan finns, t.ex. ditt eget).')
+    const login = await openWithLogin(vault, 'ditt befintliga konto')
+    console.log('\nSTEG 2 av 2: skriv det NYA kontots användarnamn och lösenord.')
+    return login
+  })())
+  if (saved) console.log('\nSkriv det NYA kontots användarnamn och lösenord.')
   const neu = await askNewLogin(false)
   const id = await slotId(neu.user)
   if (vault.slots.some((s) => s.id === id)) throw new Error(`Användarnamnet ”${neu.user}” finns redan. Ta bort det först om du vill byta lösenord.`)
   const slots = [...vault.slots, await makeSlot(neu.user, neu.password, me.bookKey!)]
-  await writeVault(me.files, me.bookKey!, slots, [me, neu])
+  await writeVault(me.files, me.bookKey!, slots, me.user ? [{ user: me.user, password: me.password! }, neu] : [neu])
   console.log(`Klart: ”${neu.user.trim()}” kan nu logga in. Boken har ${slots.length} inloggningar. Pusha för att lägga ut ändringen.`)
 } else if (cmd === 'remove') {
   const me = await openWithLogin(vault)

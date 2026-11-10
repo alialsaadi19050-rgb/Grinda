@@ -144,10 +144,15 @@ export async function openVaultWithKey(vault: Vault, unlock: Unlock, extra?: Slo
   return { files: await decryptWith(vault, bookKey), bookKey }
 }
 
+/** Öppnar boken direkt med boknyckeln. Kastar om nyckeln inte passar. */
+export async function openWithBookKey(vault: Vault, bookKey: Uint8Array): Promise<VaultFiles> {
+  if (vault.version !== 2) throw new Error('Boken har det äldre formatet.')
+  return decryptWith(vault, bookKey)
+}
+
 /** Kontrollerar att en boknyckel öppnar boken. */
 export async function bookKeyOpens(vault: Vault, bookKey: Uint8Array): Promise<boolean> {
-  if (vault.version !== 2) return false
-  return decryptWith(vault, bookKey).then(
+  return openWithBookKey(vault, bookKey).then(
     () => true,
     () => false,
   )

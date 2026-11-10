@@ -42,6 +42,8 @@ Den publicerade appen kräver användarnamn och lösenord. Bokens innehåll (upp
 
 **Flera inloggningar.** Boken låses med en slumpad boknyckel, och boknyckeln låses en gång per inloggning. Användarnamnen sparas inte i klartext, bara en hash.
 
+**Enklast: `npm run publicera`** låser boken och pushar den i ett steg. Första gången loggar du in en gång; sedan sparas boknyckeln på datorn (i `%LOCALAPPDATA%\grinda`, utanför projektet) och du slipper logga in. Är innehållet oförändrat händer ingenting. `npm run lock -- --glom` tar bort den sparade nyckeln.
+
 Kör om det här efter varje ändring i innehållet. Du loggar in med valfri befintlig inloggning, och alla inloggningar finns kvar:
 
 ```bash
@@ -87,7 +89,8 @@ Appen läggs ut på GitHub Pages automatiskt vid varje push till `main` (`.githu
 | `npm run ingest` | Kontrollerar bokens innehåll och visar vad som behöver granskas |
 | `npm test` | Kör enhetstesterna |
 | `npm run build` | Bygger en färdig version till `dist/` |
-| `npm run lock` | Krypterar innehållet till `public/vault.bin` med ditt användarnamn och lösenord |
+| `npm run publicera` | Låser boken och pushar den – utan inloggning efter första gången |
+| `npm run lock` | Krypterar innehållet till `public/vault.bin` (sparad boknyckel, eller inloggning första gången) |
 | `npm run unlock` | Packar upp `public/vault.bin` till `public/content` |
 | `npm run users -- add` / `remove` / `count` | Lägger till, tar bort eller räknar inloggningar |
 
