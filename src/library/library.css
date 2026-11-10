@@ -1160,3 +1160,14 @@ a.stp-row:hover {
     bottom: 76px;
   }
 }
+@media (max-width: 1000px) {
+  /* Plats för menyn längst ner. */
+  .mk main,
+  .mk .mk-rows {
+    padding-bottom: 110px;
+  }
+  .so-chat {
+    height: calc(100vh - 300px);
+    min-height: 420px;
+  }
+}

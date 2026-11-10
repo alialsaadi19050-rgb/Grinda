@@ -1,0 +1,580 @@
+/* Kompisar, meddelanden, dueller och delning */
+.so {
+  padding: 120px clamp(16px, 4vw, 56px) 90px;
+  max-width: 1200px;
+}
+.so-help {
+  max-width: 680px;
+  color: var(--text-dim);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.so-error {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(var(--danger-rgb), 0.14);
+  color: var(--danger-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+.so-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.so-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(var(--fg-rgb), 0.07);
+  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.1);
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+}
+.so-input:focus {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.so-row .so-input {
+  flex: 1 1 220px;
+  width: auto;
+}
+.so-row .mk-btn-primary,
+.so-row .mk-btn-ghost {
+  height: 44px;
+  padding: 0 22px;
+  font-size: 15px;
+}
+.so-join {
+  max-width: 640px;
+  margin-top: 26px;
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(var(--fg-rgb), 0.05);
+  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.08);
+}
+.so-join h2 {
+  margin: 0 0 6px;
+  font: 750 24px/1.2 var(--font-display);
+}
+.so-pop .so-join {
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.so-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 26px 0 18px;
+}
+.so-tabs > button {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(var(--fg-rgb), 0.07);
+  color: var(--text);
+  font-weight: 700;
+}
+.so-tabs > button.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.so-me {
+  position: relative;
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+.so-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+  width: min(380px, 90vw);
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--bg-raised);
+  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.12), 0 24px 60px -20px rgb(0 0 0 / calc(0.9 * var(--shadow-k)));
+  color: var(--text);
+}
+.so-pop p {
+  margin: 0 0 12px;
+}
+.so-section .st-seg {
+  margin: 0 0 14px;
+}
+.so-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  color: var(--accent-ink);
+  font: 800 16px/1 var(--font-display);
+}
+.so-name {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.so-name strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.so-name small {
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.so-small-btn {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(var(--fg-rgb), 0.09);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.so-small-btn:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* Topplistan */
+.so-board {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.so-board li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: rgba(var(--fg-rgb), 0.05);
+  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.07);
+}
+.so-board li.me {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.45);
+}
+.so-rank {
+  width: 30px;
+  font: 800 18px/1 var(--font-display);
+  text-align: center;
+  color: var(--text-dim);
+}
+.so-rank.r1,
+.so-rank.r2,
+.so-rank.r3 {
+  font-size: 24px;
+}
+.so-score {
+  display: grid;
+  justify-items: end;
+  font: 800 22px/1 var(--font-display);
+}
+.so-score small {
+  color: var(--text-dim);
+  font: 600 11.5px/1.4 var(--font-ui);
+}
+
+/* Chatten */
+.so-chat {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 14px;
+  height: min(72vh, 760px);
+}
+.so-threads,
+.so-thread-view,
+.so-thread-empty {
+  min-height: 0;
+  border-radius: 18px;
+  background: rgba(var(--fg-rgb), 0.045);
+  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.08);
+}
+.so-threads {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  overflow-y: auto;
+}
+.so-threads .so-input {
+  margin-bottom: 6px;
+}
+.so-thread {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+.so-thread:hover,
+.so-thread.on {
+  background: rgba(var(--fg-rgb), 0.07);
+}
+.so-thread-meta {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  color: var(--text-dim);
+}
+.so-unread {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12px;
+}
+.so-thread-empty {
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+}
+.so-thread-view {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.so-thread-view > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(var(--fg-rgb), 0.08);
+}
+.so-thread-view > header strong {
+  flex: 1;
+}
+.so-back {
+  display: none;
+  color: inherit;
+  font-size: 22px;
+  text-decoration: none;
+}
+.so-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  overflow-y: auto;
+}
+.so-bubble {
+  display: grid;
+  gap: 6px;
+  max-width: min(78%, 520px);
+  padding: 10px 14px;
+  border-radius: 18px 18px 18px 6px;
+  background: rgba(var(--fg-rgb), 0.08);
+  overflow-wrap: anywhere;
+}
+.so-bubble.mine {
+  align-self: flex-end;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.so-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.so-time {
+  font-size: 11.5px;
+  opacity: 0.7;
+}
+.so-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(var(--scrim-rgb), 0.25);
+  color: inherit;
+  text-decoration: none;
+}
+.so-bubble:not(.mine) .so-card {
+  background: rgba(var(--fg-rgb), 0.07);
+}
+.so-card > span:first-child {
+  font-size: 24px;
+}
+.so-card strong {
+  display: block;
+}
+.so-card small {
+  opacity: 0.8;
+}
+.so-image {
+  max-width: 100%;
+  max-height: 260px;
+  border-radius: 10px;
+  background: #fff;
+  cursor: zoom-in;
+}
+.so-image.big {
+  max-height: none;
+  cursor: zoom-out;
+}
+.so-image.loading {
+  padding: 30px;
+  background: rgba(var(--fg-rgb), 0.08);
+  font-size: 13px;
+}
+.so-notes {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(var(--scrim-rgb), 0.2);
+  font-size: 14px;
+}
+.so-compose {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(var(--fg-rgb), 0.08);
+}
+.so-compose textarea {
+  flex: 1;
+  max-height: 140px;
+  min-height: 44px;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 22px;
+  background: rgba(var(--fg-rgb), 0.08);
+  color: var(--text);
+  outline: none;
+  resize: none;
+  field-sizing: content;
+}
+.so-send-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.so-send-btn:disabled {
+  opacity: 0.45;
+}
+.so-status {
+  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 650;
+}
+.so-status.turn {
+  color: var(--accent-text);
+}
+
+/* Dela-rutan */
+.so-dialog {
+  width: min(520px, calc(100vw - 24px));
+  max-height: calc(100vh - 40px);
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: var(--bg-raised);
+  color: var(--text);
+  box-shadow: 0 30px 80px -20px rgb(0 0 0 / calc(0.9 * var(--shadow-k)));
+}
+.so-dialog::backdrop {
+  background: rgba(var(--scrim-rgb), 0.6);
+  backdrop-filter: blur(4px);
+}
+.so-dialog-inner {
+  display: grid;
+  gap: 12px;
+  padding: 20px 22px 22px;
+}
+.so-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.so-dialog h2 {
+  margin: 0;
+  font: 750 21px/1.2 var(--font-display);
+}
+.so-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.so-pick button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 5px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(var(--fg-rgb), 0.07);
+  color: var(--text);
+  font-weight: 650;
+}
+.so-pick button .so-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+.so-pick button.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.so-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+.so-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+.so-preview {
+  max-height: 200px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(var(--fg-rgb), 0.05);
+}
+.so-preview img {
+  display: block;
+  max-width: 100%;
+  border-radius: 8px;
+}
+.so-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font: 13.5px/1.5 var(--font-ui);
+}
+.so-send {
+  justify-self: end;
+  height: 46px;
+}
+.so-send:disabled {
+  opacity: 0.5;
+}
+.so-done p {
+  margin: 0 0 14px;
+  font: 700 20px/1.3 var(--font-display);
+}
+
+/* Duellen */
+.so-clock {
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.so-duel-result {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 30px 24px;
+  border-radius: 22px;
+  background: rgba(var(--fg-rgb), 0.05);
+  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.08);
+  text-align: center;
+}
+.so-duel-result h1 {
+  margin: 0;
+  font: 800 clamp(28px, 5vw, 42px) / 1.1 var(--font-display);
+}
+.so-duel-result h3 {
+  margin: 10px 0 0;
+}
+.so-duel-score {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.so-duel-score > div {
+  display: grid;
+  gap: 4px;
+}
+.so-duel-score strong {
+  font: 800 56px/1 var(--font-display);
+}
+.so-duel-score strong small {
+  font-size: 22px;
+  color: var(--text-dim);
+}
+.so-duel-score > b {
+  color: var(--text-dim);
+}
+.so-duel-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.so-duel-list a {
+  color: var(--accent-text);
+}
+
+/* Olästa meddelanden i menyn */
+.mk-nav nav a .so-unread {
+  display: inline-grid;
+  margin-left: 5px;
+  vertical-align: 1px;
+}
+
+@media (max-width: 760px) {
+  .so-chat {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .so-chat .so-thread-view,
+  .so-chat .so-thread-empty {
+    display: none;
+  }
+  .so-chat.open .so-threads {
+    display: none;
+  }
+  .so-chat.open .so-thread-view {
+    display: flex;
+    height: calc(100vh - 260px);
+  }
+  .so-back {
+    display: block;
+  }
+  .so-me {
+    margin-left: 0;
+    width: 100%;
+  }
+  .so-duel-score strong {
+    font-size: 42px;
+  }
+}

@@ -5,7 +5,10 @@ import { setSubject, subjectOf } from '../subject/subject.ts'
 import { loadContent, type Content } from '../content/load.ts'
 import { MathText } from '../ui/MathText.tsx'
 import { Figures } from '../ui/Figure.tsx'
-import { Bookmark, CalculatorIcon, ChevronLeft, ChevronRight, Collapse, Gear, Mute, Sound } from '../design/icons.tsx'
+import { Bookmark, CalculatorIcon, ChevronLeft, ChevronRight, Collapse, Gear, Mute, Send, Sound } from '../design/icons.tsx'
+import { ShareDialog } from '../social/ShareDialog.tsx'
+import { ReportDialog } from '../admin/ReportDialog.tsx'
+import { useCanInvite } from '../vault/InviteTab.tsx'
 import { Calculator } from '../calculator/Calculator.tsx'
 import { InkSurface, type InkSurfaceHandle } from '../canvas/InkSurface.tsx'
 import { actionForEvent, S620_ASPECT, updateSettings, useSettings } from '../settings/settings.ts'
@@ -30,6 +33,9 @@ export function ExercisePage({ id }: { id: string }) {
   const [problemOpen, setProblemOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [calcOpen, setCalcOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const isAdmin = useCanInvite()
   const ink = useRef<InkSurfaceHandle>(null)
   const answers = useRef<HTMLElement>(null)
   /** Ökar vid ”gör om”, så att svarspanelen börjar om. */
@@ -261,6 +267,16 @@ export function ExercisePage({ id }: { id: string }) {
           <button className={`ex-icon ${calcOpen ? 'on' : ''}`} onClick={() => setCalcOpen((o) => !o)} aria-label="Miniräknare" aria-pressed={calcOpen} title={`Miniräknare (${settings.shortcuts.calculator})`}>
             <CalculatorIcon size={19} />
           </button>
+          <button className="ex-icon" onClick={() => setShareOpen(true)} aria-label="Dela med en kompis" title="Dela uppgiften (och din uträkning) med en kompis">
+            <Send size={18} />
+          </button>
+          {isAdmin && (
+            <button className="ex-icon" onClick={() => setReportOpen(true)} aria-label="Rapportera fel" title="Rapportera fel i uppgiften (bara du ser den här knappen)">
+              <span aria-hidden="true" style={{ fontSize: 16 }}>
+                ⚑
+              </span>
+            </button>
+          )}
           <button className="ex-icon" onClick={() => setSettingsOpen(true)} aria-label="Inställningar" title="Inställningar">
             <Gear size={19} />
           </button>
@@ -301,6 +317,8 @@ export function ExercisePage({ id }: { id: string }) {
 
       <Calculator open={calcOpen} onClose={() => setCalcOpen(false)} noCalculator={ex.calculator === false} />
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
+      {shareOpen && <ShareDialog ex={ex} onClose={() => setShareOpen(false)} />}
+      {reportOpen && <ReportDialog ex={ex} onClose={() => setReportOpen(false)} />}
       <ThemeEditor />
     </div>
   )

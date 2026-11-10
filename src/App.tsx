@@ -6,6 +6,7 @@ import { StatsPage } from './library/StatsPage.tsx'
 import { Login } from './vault/Login.tsx'
 import { SubjectPicker } from './subject/SubjectPicker.tsx'
 import { Celebrator } from './game/Celebrator.tsx'
+import { StatsPublisher } from './social/StatsPublisher.tsx'
 import { useReadability } from './settings/readability.ts'
 import { restoreSession, useVaultStatus } from './vault/vault.ts'
 
@@ -15,6 +16,9 @@ const LessonPage = lazy(() => import('./lessons/LessonPage.tsx').then((m) => ({ 
 const LessonsIndex = lazy(() => import('./lessons/LessonsIndex.tsx').then((m) => ({ default: m.LessonsIndex })))
 const PracticePage = lazy(() => import('./practice/PracticePage.tsx').then((m) => ({ default: m.PracticePage })))
 const GeneratorPage = lazy(() => import('./practice/GeneratorPage.tsx').then((m) => ({ default: m.GeneratorPage })))
+const FriendsPage = lazy(() => import('./social/FriendsPage.tsx').then((m) => ({ default: m.FriendsPage })))
+const DuelPage = lazy(() => import('./social/DuelPage.tsx').then((m) => ({ default: m.DuelPage })))
+const AdminPage = lazy(() => import('./admin/AdminPage.tsx').then((m) => ({ default: m.AdminPage })))
 const FormulaPage = lazy(() => import('./formulas/FormulaPage.tsx').then((m) => ({ default: m.FormulaPage })))
 const ReviewPage = lazy(() => import('./review/ReviewPage.tsx').then((m) => ({ default: m.ReviewPage })))
 const loading = <div className="mk-loading">Laddar …</div>
@@ -32,6 +36,7 @@ export function App() {
     <>
       <Routes />
       <Celebrator />
+      <StatsPublisher />
     </>
   )
 }
@@ -93,6 +98,24 @@ function Routes() {
     return (
       <Suspense fallback={loading}>
         <GeneratorPage key={route} id={decodeURIComponent(route.slice('ova/nya/'.length))} />
+      </Suspense>
+    )
+  if (route === 'kompisar' || route.startsWith('kompisar/'))
+    return (
+      <Suspense fallback={loading}>
+        <FriendsPage with={route.split('/')[1] || undefined} />
+      </Suspense>
+    )
+  if (route.startsWith('duell/'))
+    return (
+      <Suspense fallback={loading}>
+        <DuelPage key={route} id={route.slice('duell/'.length)} />
+      </Suspense>
+    )
+  if (route === 'admin')
+    return (
+      <Suspense fallback={loading}>
+        <AdminPage />
       </Suspense>
     )
   if (route === 'formler')

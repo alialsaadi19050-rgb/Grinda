@@ -13,6 +13,10 @@ import { Figure } from '../ui/Figure.tsx'
 import { ThemeEditor } from '../design/ThemeEditor.tsx'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
 import { GameStrip } from '../game/GameStrip.tsx'
+import { AnnouncementBanner } from '../admin/AnnouncementBanner.tsx'
+import { useInbox } from '../social/api.ts'
+import { useCanInvite } from '../vault/InviteTab.tsx'
+import '../social/social.css'
 import { recommend, useProgress, type Progress, type Status } from '../progress/progress.ts'
 import './library.css'
 
@@ -67,6 +71,7 @@ export function Library() {
     <div className="mk grain">
       <Nav streak={progress.streakDays} onSettings={() => setSettingsOpen('tablet')} active="home" />
       <Hero ex={featured} progress={progress} total={exercises.length} />
+      <AnnouncementBanner />
       <GameStrip exercises={exercises} onGoal={() => setSettingsOpen('study')} />
 
       <div className="mk-rows">
@@ -149,12 +154,15 @@ export function Library() {
   )
 }
 
-export type NavPage = 'home' | 'chapter' | 'learn' | 'practice' | 'formulas' | 'friends' | 'stats'
+export type NavPage = 'home' | 'chapter' | 'learn' | 'practice' | 'formulas' | 'friends' | 'stats' | 'admin'
 
 export function Nav({ streak, onSettings, active }: { streak: number; onSettings: () => void; active: NavPage }) {
   const subject = useSubject()
   const content = useContent()
   const firstChapter = content?.index.chapters[0]?.id ?? (subject === 'fysik' ? 102 : 1)
+  const inbox = useInbox()
+  const unread = Object.values(inbox.unread).reduce((s, n) => s + n, 0)
+  const isAdmin = useCanInvite()
   return (
     <header className="mk-nav">
       <a className="mk-logo" href="#/" title="Byt ämne">
@@ -179,9 +187,18 @@ export function Nav({ streak, onSettings, active }: { streak: number; onSettings
         <a className={active === 'formulas' ? 'on' : ''} href="#/formler">
           Formler
         </a>
+        <a className={active === 'friends' ? 'on' : ''} href="#/kompisar">
+          Kompisar
+          {unread > 0 && <b className="so-unread">{unread}</b>}
+        </a>
         <a className={active === 'stats' ? 'on' : ''} href="#/statistik">
           Statistik
         </a>
+        {isAdmin && (
+          <a className={active === 'admin' ? 'on' : ''} href="#/admin">
+            Admin
+          </a>
+        )}
       </nav>
       <div className="mk-nav-right">
         <span className="mk-streak" title="Dagar i rad">
