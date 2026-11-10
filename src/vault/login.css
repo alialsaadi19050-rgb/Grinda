@@ -84,3 +84,17 @@
 .lg-btn:disabled {
   opacity: 0.5;
 }
+.lg-switch {
+  justify-self: center;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: 600 13.5px var(--font-ui);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.lg-switch:hover:not(:disabled) {
+  color: var(--text);
+}

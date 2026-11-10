@@ -38,6 +38,7 @@ if (vault?.version === 2) {
   slots = [await makeSlot(me.user, me.password, bookKey)]
   check = [me]
 } else {
+  if (process.argv.includes('--ny')) console.log('OBS: med --ny får boken en ny nyckel. Konton som skapats med inbjudningskod slutar då fungera och behöver nya koder.')
   console.log('Välj användarnamn och lösenord för boken.')
   const me = await askNewLogin()
   bookKey = newBookKey()

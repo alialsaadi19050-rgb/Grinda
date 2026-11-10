@@ -4,13 +4,15 @@ import { openThemeEditor } from '../design/ThemeEditor.tsx'
 import type { Background } from '../canvas/types.ts'
 import { createBackup, readBackup, restoreBackup, type Backup, type BackupSummary } from '../storage/backup.ts'
 import { maskKey, PROVIDERS, setApiKey, setProvider, testKey, useAi, type Provider } from '../ai/ai.ts'
+import { InviteTab, useCanInvite } from '../vault/InviteTab.tsx'
 import './settings.css'
 
-type Tab = 'tablet' | 'keys' | 'paper' | 'ai' | 'data'
+type Tab = 'tablet' | 'keys' | 'paper' | 'ai' | 'data' | 'invite'
 
 export function SettingsDialog({ onClose, initialTab = 'tablet' }: { onClose: () => void; initialTab?: Tab }) {
   const [tab, setTab] = useState<Tab>(initialTab)
   const dialog = useRef<HTMLDialogElement>(null)
+  const canInvite = useCanInvite()
 
   useEffect(() => {
     const d = dialog.current!
@@ -40,6 +42,7 @@ export function SettingsDialog({ onClose, initialTab = 'tablet' }: { onClose: ()
               ['paper', 'Papper, ljud och färger'],
               ['ai', 'AI'],
               ['data', 'Data'],
+              ...(canInvite ? ([['invite', 'Bjud in']] as const) : []),
             ] as const
           ).map(([id, label]) => (
             <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>
@@ -53,6 +56,7 @@ export function SettingsDialog({ onClose, initialTab = 'tablet' }: { onClose: ()
           {tab === 'paper' && <PaperTab onClose={onClose} />}
           {tab === 'ai' && <AiTab />}
           {tab === 'data' && <DataTab />}
+          {tab === 'invite' && <InviteTab />}
         </div>
       </div>
     </dialog>

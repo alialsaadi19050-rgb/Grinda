@@ -62,6 +62,13 @@ npm run users -- remove
 
 Om alla lösenord är glömda börjar `npm run lock -- --ny` om med en enda ny inloggning.
 
+**Inbjudningskoder (enklast).** Under **Inställningar → Bjud in** skapar bokens ägare en kod, t.ex. `K7RX2-MQ9TB`, eller en länk med koden ifylld. Kompisen trycker på **Har du en inbjudningskod?** på inloggningssidan och väljer eget användarnamn och lösenord. Boken behöver inte låsas om.
+
+- En kod fungerar en gång och gäller i 7 dagar. Oanvända koder kan dras tillbaka, och konton som skapats med en kod kan tas bort i samma lista.
+- Koden låser boknyckeln precis som ett lösenord. Servern (Supabase-tabellerna `invites` och `book_slots`) får bara en hash av koden och nycklar som är låsta, så den kan aldrig själv öppna boken.
+- Vem som får bjuda in styrs av tabellen `invite_admins` (kontots id, en hash av användarnamnet).
+- `npm run lock -- --ny` ger boken en ny nyckel. Då slutar konton från inbjudningskoder att fungera och behöver nya koder.
+
 I PowerShell skriver du `npm.cmd` i stället för `npm`.
 
 På en ny dator, efter `git clone`, packar du upp innehållet igen för att kunna redigera det:

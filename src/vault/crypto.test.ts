@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildVault, login, makeSlot, newBookKey, openVault, parseVault } from './crypto.ts'
+import { buildVault, inviteHash, login, makeSlot, newBookKey, newInviteCode, openInvite, openVault, parseVault, prettyInvite, sealInvite } from './crypto.ts'
 
 const files = { files: { 'data/a.json': '{"x":1}' }, createdAt: 'nu' }
 
@@ -53,5 +53,33 @@ describe('krypterade API-nycklar', () => {
     await expect(unseal(await secretsKey('elev', 'annat456'), sealed)).rejects.toThrow()
     // Synkhemligheten (som skickas till servern) är något helt annat.
     expect(await syncSecret('elev', 'hemligt123')).not.toContain(sealed.ct.slice(0, 8))
+  })
+})
+
+describe('inbjudningskoder', () => {
+  it('ger koder som är lätta att skriva av', () => {
+    for (let i = 0; i < 50; i++) expect(newInviteCode()).toMatch(/^[A-HJKMNP-Z2-9]{5}-[A-HJKMNP-Z2-9]{5}$/)
+    expect(prettyInvite(' abcde fghjk ')).toBe('ABCDE-FGHJK')
+  })
+
+  it('låser upp boknyckeln med koden, oavsett hur den skrivs', async () => {
+    const bookKey = newBookKey()
+    const code = newInviteCode()
+    const sealed = await sealInvite(code, bookKey)
+    expect(await openInvite(code.toLowerCase().replace('-', ' '), sealed)).toEqual(bookKey)
+    await expect(openInvite('AAAAA-BBBBB', sealed)).rejects.toThrow()
+    expect(await inviteHash(code)).toBe(await inviteHash(code.toLowerCase().replace('-', '')))
+  })
+
+  it('ett konto från servern öppnar boken utan att ligga i den', async () => {
+    const bookKey = newBookKey()
+    const files = { files: { 'data/a.json': '{"x":1}' }, createdAt: '' }
+    const vault = parseVault(await buildVault(files, bookKey, [await makeSlot('ägare', 'hemligt123', bookKey)]))
+    const remote = await makeSlot('Kompis', 'kompis123', bookKey)
+    await expect(login(vault, 'kompis', 'kompis123')).rejects.toThrow()
+    const res = await login(vault, 'kompis', 'kompis123', remote)
+    expect(res.files).toEqual(files)
+    expect(await openVault(vault, res.unlock, remote)).toEqual(files)
+    await expect(openVault(vault, res.unlock)).rejects.toThrow()
   })
 })

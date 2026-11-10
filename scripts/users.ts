@@ -15,6 +15,7 @@ if (vault.version !== 2) throw new Error('Boken har det äldre formatet. Kör np
 
 if (cmd === 'count') {
   console.log(`Boken har ${vault.slots.length} ${vault.slots.length === 1 ? 'inloggning' : 'inloggningar'}.`)
+  console.log('Konton som skapats med inbjudningskod ligger på servern och syns i appen under Inställningar → Bjud in.')
 } else if (cmd === 'add') {
   console.log('\nSTEG 1 av 2: logga in med DITT konto (ett som redan finns, t.ex. ditt eget).')
   const me = await openWithLogin(vault, 'ditt befintliga konto')

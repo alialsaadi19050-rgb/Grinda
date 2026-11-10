@@ -12,10 +12,7 @@ import { clearDirty, markDirty, readDirty, replaceDirty, setChangeListener, type
 import { AI_DOC, aiSnapshot, applyRemoteAi, clearAiLocal } from '../ai/ai.ts'
 import { seal, unseal, type Sealed } from '../vault/crypto.ts'
 
-// Projektets publika adress och publiceringsnyckel. De är gjorda för att ligga i webbläsaren:
-// tabellerna går inte att läsa direkt, bara via funktionerna som kräver hemligheten.
-const URL = 'https://vdiodkpjtylqzelujokw.supabase.co/rest/v1/rpc'
-const KEY = 'sb_publishable_YVyQGrd-cmdmfsI7q9C5hQ_Udho8-oU'
+import { RPC_URL as URL, RPC_KEY as KEY } from './supabase.ts'
 
 const STATE_KEY = 'matte.sync.v1'
 /** Satt efter en återställd backup: skicka upp allt igen. */

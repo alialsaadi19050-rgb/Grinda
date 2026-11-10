@@ -109,14 +109,17 @@ export interface Unlock {
   key: CryptoKey
 }
 
-/** Kastar om användarnamnet eller lösenordet är fel. */
-export async function login(vault: Vault, user: string, password: string): Promise<{ unlock: Unlock; bookKey: Uint8Array | null; files: VaultFiles }> {
+/**
+ * Kastar om användarnamnet eller lösenordet är fel. `extra` är en plats som inte ligger i boken
+ * utan hämtats från servern (konton som skapats med en inbjudningskod).
+ */
+export async function login(vault: Vault, user: string, password: string, extra?: Slot | null): Promise<{ unlock: Unlock; bookKey: Uint8Array | null; files: VaultFiles }> {
   if (vault.version === 1) {
     const key = await deriveKey(user, password, vault.salt)
     return { unlock: { slot: 'v1', key }, bookKey: null, files: await openVault(vault, { slot: 'v1', key }) }
   }
   const id = await slotId(user)
-  const slot = vault.slots.find((s) => s.id === id)
+  const slot = vault.slots.find((s) => s.id === id) ?? (extra?.id === id ? extra : undefined)
   if (!slot) throw new Error('Fel användarnamn eller lösenord.')
   const key = await deriveKey(user, password, unb64(slot.salt))
   const unlock = { slot: id, key }
@@ -125,14 +128,68 @@ export async function login(vault: Vault, user: string, password: string): Promi
 }
 
 /** Öppnar boken med en sparad inloggning. Kastar om platsen tagits bort eller nyckeln inte passar. */
-export async function openVault(vault: Vault, unlock: Unlock): Promise<VaultFiles> {
+export async function openVault(vault: Vault, unlock: Unlock, extra?: Slot | null): Promise<VaultFiles> {
+  return (await openVaultWithKey(vault, unlock, extra)).files
+}
+
+/** Som openVault, men ger också boknyckeln (den behövs för att skapa inbjudningskoder). */
+export async function openVaultWithKey(vault: Vault, unlock: Unlock, extra?: Slot | null): Promise<{ files: VaultFiles; bookKey: Uint8Array | null }> {
   if (vault.version === 1) {
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: vault.iv as BufferSource }, unlock.key, vault.data as BufferSource)
-    return JSON.parse(dec.decode(plain)) as VaultFiles
+    return { files: JSON.parse(dec.decode(plain)) as VaultFiles, bookKey: null }
   }
-  const slot = vault.slots.find((s) => s.id === unlock.slot)
+  const slot = vault.slots.find((s) => s.id === unlock.slot) ?? (extra?.id === unlock.slot ? extra : undefined)
   if (!slot) throw new Error('Inloggningen finns inte längre.')
-  return decryptWith(vault, await unwrap(slot, unlock.key))
+  const bookKey = await unwrap(slot, unlock.key)
+  return { files: await decryptWith(vault, bookKey), bookKey }
+}
+
+/** Kontrollerar att en boknyckel öppnar boken. */
+export async function bookKeyOpens(vault: Vault, bookKey: Uint8Array): Promise<boolean> {
+  if (vault.version !== 2) return false
+  return decryptWith(vault, bookKey).then(
+    () => true,
+    () => false,
+  )
+}
+
+/* ---------- Inbjudningskoder ---------- */
+
+// En inbjudningskod låser boknyckeln precis som ett lösenord. Servern får bara en hash av
+// koden och den låsta nyckeln, så den kan aldrig själv öppna boken.
+
+const INVITE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789' // utan I, L, O, 0 och 1
+
+/** En slumpad kod som "K7RX2-MQ9TB" (cirka 50 bitar). */
+export function newInviteCode(): string {
+  const out: string[] = []
+  while (out.length < 10) {
+    for (const b of random(16)) {
+      // Förkasta de högsta värdena så att alla tecken blir lika vanliga.
+      if (b < 248 && out.length < 10) out.push(INVITE_ALPHABET[b % 31])
+    }
+  }
+  return `${out.slice(0, 5).join('')}-${out.slice(5).join('')}`
+}
+
+export const normalizeInvite = (code: string) => code.toUpperCase().replace(/[^A-Z0-9]/g, '')
+export const prettyInvite = (code: string) => {
+  const n = normalizeInvite(code)
+  return n.length === 10 ? `${n.slice(0, 5)}-${n.slice(5)}` : n
+}
+
+export async function inviteHash(code: string): Promise<string> {
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(`grinda-invite:${normalizeInvite(code)}`)))
+  return Array.from(hash, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/** Boknyckeln låst med inbjudningskoden. */
+export const sealInvite = (code: string, bookKey: Uint8Array) => makeSlot('inbjudan', normalizeInvite(code), bookKey)
+
+/** Kastar om koden inte passar. */
+export async function openInvite(code: string, sealed: Pick<Slot, 'salt' | 'iv' | 'key'>): Promise<Uint8Array> {
+  const key = await deriveKey('inbjudan', normalizeInvite(code), unb64(sealed.salt))
+  return unwrap({ id: '', ...sealed }, key)
 }
 
 async function unwrap(slot: Slot, key: CryptoKey): Promise<Uint8Array> {
