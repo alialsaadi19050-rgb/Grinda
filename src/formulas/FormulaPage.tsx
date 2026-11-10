@@ -7,7 +7,7 @@ import { lessonHref, useLessons } from '../lessons/data.ts'
 import { Nav, useContent } from '../library/Library.tsx'
 import { useProgress } from '../progress/progress.ts'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
-import { subjectName, useSubject } from '../subject/subject.ts'
+import { subjectOf, useSubject } from '../subject/subject.ts'
 import { MathText } from '../ui/MathText.tsx'
 import '../practice/practice.css'
 import './formulas.css'
@@ -16,17 +16,20 @@ type Rule = { title: string; text: string }
 const rulesOf = (l: Lesson): Rule[] => l.blocks.flatMap((b) => (b.type === 'rule' ? [{ title: b.title, text: b.text }] : []))
 
 export function FormulaPage() {
-  const content = useContent()
+  // Alla kapitel i båda ämnena, med det valda ämnet först.
+  const content = useContent('all')
   const lessons = useLessons()
   const subject = useSubject()
-  const progress = useProgress(content?.exercises)
+  const mine = useContent()
+  const progress = useProgress(mine?.exercises)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [query, setQuery] = useState('')
 
   const groups = useMemo(() => {
     if (!content || !lessons) return []
     const q = query.trim().toLowerCase()
-    return content.index.chapters.flatMap((c) =>
+    const chapters = [...content.index.chapters].sort((a, b) => Number(subjectOf(b) === subject) - Number(subjectOf(a) === subject))
+    return chapters.flatMap((c) =>
       c.sections
         .map((s) => ({
           key: `${c.id}-${s.id}`,
@@ -39,7 +42,7 @@ export function FormulaPage() {
         }))
         .filter((g) => g.lessons.length),
     )
-  }, [content, lessons, query])
+  }, [content, lessons, query, subject])
 
   if (!content || !lessons || !progress) return <div className="mk-loading">Laddar …</div>
   const total = groups.reduce((n, g) => n + g.lessons.reduce((m, l) => m + l.rules.length, 0), 0)
@@ -50,9 +53,9 @@ export function FormulaPage() {
       <main className="fb">
         <header className="fb-head">
           <div>
-            <p className="mk-kicker">{subjectName(subject)}</p>
+            <p className="mk-kicker">Fysik 2 och Matte 5</p>
             <h1 className="ch-title">Formelblad</h1>
-            <p className="pr-lead">Alla regler och formler från genomgångarna, i bokens ordning. Tryck på ett delområde för att läsa hela genomgången.</p>
+            <p className="pr-lead">Alla regler och formler från genomgångarna, i bokens ordning – det ämne du pluggar står först. Tryck på ett delområde för att läsa hela genomgången.</p>
           </div>
           <div className="fb-tools">
             <label className="fb-search">

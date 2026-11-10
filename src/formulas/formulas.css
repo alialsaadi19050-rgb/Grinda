@@ -296,3 +296,21 @@
     opacity: 0;
   }
 }
+.fd-chapter {
+  margin-top: 18px;
+}
+.fd-chapter-title {
+  margin: 0 0 8px;
+  color: var(--text-dim);
+  font: 750 12.5px/1.3 var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.fd-chapter-title small {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.fd-chapter .fd-topic {
+  margin-bottom: 8px;
+}
