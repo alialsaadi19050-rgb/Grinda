@@ -14,6 +14,7 @@ import { ThemeEditor } from '../design/ThemeEditor.tsx'
 import { toggleBookmark, useBookmarks } from '../bookmarks/bookmarks.ts'
 import { lessonHref, useLessons } from '../lessons/data.ts'
 import { attemptsFor, currentRound, startRedo } from '../storage/db.ts'
+import { generatorFor, generatorHref } from '../practice/generators.ts'
 import { endRedoSession, getRedoSession, markRedoStarted } from './redoSession.ts'
 import '../library/library.css'
 import './exercise.css'
@@ -157,6 +158,7 @@ export function ExercisePage({ id }: { id: string }) {
   const section = content.sections.find((s) => s.section === ex.section)
   const plain = !settings.tablet
   const lesson = lessons?.find((l) => l.topic === ex.topic)
+  const generator = generatorFor(ex.topic)
 
   // Uppgiften ser likadan ut i båda lägena – bara placeringen skiljer.
   const problem = (
@@ -175,10 +177,19 @@ export function ExercisePage({ id }: { id: string }) {
         </ol>
       </div>
       <Figures figures={ex.figures} />
-      {lesson && (
-        <a className="ex-lesson" href={lessonHref(lesson.id)} title="Läs bokens teori och exempel">
-          Genomgång: {lesson.title}
-        </a>
+      {(lesson || generator) && (
+        <div className="ex-links">
+          {lesson && (
+            <a className="ex-lesson" href={lessonHref(lesson.id)} title="Läs bokens teori och exempel">
+              Genomgång: {lesson.title}
+            </a>
+          )}
+          {generator && (
+            <a className="ex-lesson alt" href={generatorHref(generator.id)} title="Samma sorts uppgift med nya tal – öva tills det sitter">
+              🎲 Öva med nya siffror
+            </a>
+          )}
+        </div>
       )}
     </>
   )

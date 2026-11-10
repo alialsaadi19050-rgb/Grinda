@@ -5,9 +5,10 @@ import type { Background } from '../canvas/types.ts'
 import { createBackup, readBackup, restoreBackup, type Backup, type BackupSummary } from '../storage/backup.ts'
 import { maskKey, PROVIDERS, setApiKey, setProvider, testKey, useAi, type Provider } from '../ai/ai.ts'
 import { InviteTab, useCanInvite } from '../vault/InviteTab.tsx'
+import { SrsControls } from '../practice/SrsControls.tsx'
 import './settings.css'
 
-type Tab = 'tablet' | 'keys' | 'paper' | 'ai' | 'data' | 'invite'
+type Tab = 'tablet' | 'keys' | 'paper' | 'study' | 'ai' | 'data' | 'invite'
 
 export function SettingsDialog({ onClose, initialTab = 'tablet' }: { onClose: () => void; initialTab?: Tab }) {
   const [tab, setTab] = useState<Tab>(initialTab)
@@ -40,6 +41,7 @@ export function SettingsDialog({ onClose, initialTab = 'tablet' }: { onClose: ()
               ['tablet', 'Ritplatta'],
               ['keys', 'Kortkommandon'],
               ['paper', 'Papper, ljud och färger'],
+              ['study', 'Mål och läsbarhet'],
               ['ai', 'AI'],
               ['data', 'Data'],
               ...(canInvite ? ([['invite', 'Bjud in']] as const) : []),
@@ -54,6 +56,7 @@ export function SettingsDialog({ onClose, initialTab = 'tablet' }: { onClose: ()
           {tab === 'tablet' && <TabletTab />}
           {tab === 'keys' && <KeysTab />}
           {tab === 'paper' && <PaperTab onClose={onClose} />}
+          {tab === 'study' && <StudyTab />}
           {tab === 'ai' && <AiTab />}
           {tab === 'data' && <DataTab />}
           {tab === 'invite' && <InviteTab />}
@@ -335,6 +338,55 @@ function KeysTab() {
         Återställ standard
       </button>
     </section>
+  )
+}
+
+/* ---------- Mål och läsbarhet ---------- */
+
+function StudyTab() {
+  const s = useSettings()
+  const sizes = [
+    ['m', 'Vanlig'],
+    ['l', 'Större'],
+    ['xl', 'Störst'],
+  ] as const
+  return (
+    <>
+      <section className="st-section">
+        <h3>Dagligt mål</h3>
+        <p className="st-help">Hur många rätta svar vill du klara per dag? Ringen på startsidan fylls när du räknar.</p>
+        <div className="st-seg">
+          {[0, 5, 10, 15, 20, 30].map((n) => (
+            <button key={n} className={s.dailyGoal === n ? 'on' : ''} onClick={() => updateSettings({ dailyGoal: n })}>
+              {n || 'Inget mål'}
+            </button>
+          ))}
+        </div>
+        <label className="st-switch">
+          <input type="checkbox" checked={s.celebrate} onChange={(e) => updateSettings({ celebrate: e.target.checked })} />
+          <span>Konfetti och en liten ruta när jag klarar något (nytt märke, ny nivå, dagens mål, klart avsnitt)</span>
+        </label>
+      </section>
+      <section className="st-section">
+        <h3>Repetition</h3>
+        <SrsControls />
+      </section>
+      <section className="st-section">
+        <h3>Läsbarhet</h3>
+        <h4>Textstorlek för uppgifter, facit och genomgångar</h4>
+        <div className="st-seg">
+          {sizes.map(([id, label]) => (
+            <button key={id} className={s.textSize === id ? 'on' : ''} onClick={() => updateSettings({ textSize: id })}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <label className="st-switch">
+          <input type="checkbox" checked={s.easyFont} onChange={(e) => updateSettings({ easyFont: e.target.checked })} />
+          <span>Lättläst typsnitt (Atkinson Hyperlegible) – tydligare skillnad mellan liknande bokstäver</span>
+        </label>
+      </section>
+    </>
   )
 }
 

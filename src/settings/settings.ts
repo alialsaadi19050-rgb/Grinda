@@ -99,7 +99,31 @@ export interface Settings {
   tiScale?: number
   /** Med ritplatta: skrivyta bredvid uppgiften. Utan: allt i en centrerad kolumn och uträkningar med tangentbordet. */
   tablet: boolean
+  /** Dagligt mål: antal rätta deluppgifter per dag. 0 = inget mål. */
+  dailyGoal: number
+  /** Repetition med mellanrum av uppgifter du fått fel på. */
+  srs: SrsSettings
+  /** Konfetti och märkesrutor när du klarar något. */
+  celebrate: boolean
+  /** Textstorlek för uppgifter, facit och genomgångar. */
+  textSize: 'm' | 'l' | 'xl'
+  /** Lättläst typsnitt (Atkinson Hyperlegible) i stället för bokens. */
+  easyFont: boolean
 }
+
+export interface SrsSettings {
+  enabled: boolean
+  /** Dagar till nästa repetition, steg för steg. Efter sista steget är uppgiften klar. */
+  intervals: number[]
+  /** Högst så här många repetitioner visas per dag. 0 = alla. */
+  maxPerDay: number
+}
+
+export const SRS_PRESETS: { id: string; label: string; intervals: number[] }[] = [
+  { id: 'snabb', label: 'Snabb (inför prov)', intervals: [1, 2, 4] },
+  { id: 'standard', label: 'Standard', intervals: [1, 3, 7] },
+  { id: 'lang', label: 'Lång (sitter länge)', intervals: [1, 3, 7, 14, 30] },
+]
 
 export const DEFAULT_SETTINGS: Settings = {
   paper: 'light',
@@ -112,6 +136,11 @@ export const DEFAULT_SETTINGS: Settings = {
   inputMode: 'math',
   lowLatency: true,
   tablet: true,
+  dailyGoal: 10,
+  srs: { enabled: true, intervals: [1, 3, 7], maxPerDay: 10 },
+  celebrate: true,
+  textSize: 'm',
+  easyFont: false,
 }
 
 const KEY = 'matte.settings.v1'
@@ -121,7 +150,7 @@ function load(): Settings {
     const raw = localStorage.getItem(KEY)
     if (raw) {
       const s = JSON.parse(raw)
-      return { ...DEFAULT_SETTINGS, ...s, shortcuts: { ...DEFAULT_SHORTCUTS, ...s.shortcuts }, zone: { ...DEFAULT_SETTINGS.zone, ...s.zone }, tools: { ...DEFAULT_TOOLS, ...s.tools } }
+      return { ...DEFAULT_SETTINGS, ...s, shortcuts: { ...DEFAULT_SHORTCUTS, ...s.shortcuts }, zone: { ...DEFAULT_SETTINGS.zone, ...s.zone }, tools: { ...DEFAULT_TOOLS, ...s.tools }, srs: { ...DEFAULT_SETTINGS.srs, ...s.srs } }
     }
   } catch {
     /* ingen lagring */

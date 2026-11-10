@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { filterContent, subjectName, useSubject } from '../subject/subject.ts'
 import type { Exercise } from '../content/types.ts'
-import { loadContent, type Content } from '../content/load.ts'
+import { loadContentOnce, type Content } from '../content/load.ts'
 import { CoverArt, Poster, motifFor } from '../design/Cover.tsx'
 import { Bookmark, Check, ChevronLeft, ChevronRight, Flame, Gear, Play, Target } from '../design/icons.tsx'
 import { savedFirst, useBookmarks } from '../bookmarks/bookmarks.ts'
@@ -12,18 +12,16 @@ import { MathText } from '../ui/MathText.tsx'
 import { Figure } from '../ui/Figure.tsx'
 import { ThemeEditor } from '../design/ThemeEditor.tsx'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
+import { GameStrip } from '../game/GameStrip.tsx'
 import { recommend, useProgress, type Progress, type Status } from '../progress/progress.ts'
 import './library.css'
 
-/** Innehållet laddas en gång och delas av biblioteket och kapitelsidan. */
-let contentPromise: Promise<Content> | null = null
 /** Bokens innehåll. Som standard bara det valda ämnets kapitel (Fysik 2 eller Matte 5). */
 export function useContent(scope: 'subject' | 'all' = 'subject') {
   const [content, setContent] = useState<Content | null>(null)
   const subject = useSubject()
   useEffect(() => {
-    contentPromise ??= loadContent()
-    contentPromise.then(setContent)
+    loadContentOnce().then(setContent)
   }, [])
   return useMemo(() => (content && scope === 'subject' ? filterContent(content, subject) : content), [content, scope, subject])
 }
@@ -50,7 +48,7 @@ export function Library() {
   const lessons = useLessons()?.filter((l) => content?.index.chapters.some((c) => c.id === l.chapter))
   const lp = useLessonProgress()
   const progress = useProgress(content?.exercises)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState<false | 'tablet' | 'study'>(false)
   if (!content || !progress) return <div className="mk-loading">Laddar …</div>
 
   const { exercises } = content
@@ -67,8 +65,9 @@ export function Library() {
 
   return (
     <div className="mk grain">
-      <Nav streak={progress.streakDays} onSettings={() => setSettingsOpen(true)} active="home" />
+      <Nav streak={progress.streakDays} onSettings={() => setSettingsOpen('tablet')} active="home" />
       <Hero ex={featured} progress={progress} total={exercises.length} />
+      <GameStrip exercises={exercises} onGoal={() => setSettingsOpen('study')} />
 
       <div className="mk-rows">
         <Row title={progress.solvedTotal || resume.some((e) => st(e) === 'attempted') ? 'Fortsätt där du slutade' : 'Börja här'}>
@@ -100,6 +99,7 @@ export function Library() {
         {redo.length > 0 && (
           <Row
             title="Gör om"
+            href="#/ova"
             note="Uppgifter du fått fel på. Gör om dem utan fel så försvinner de härifrån."
             meta={
               <button className="mk-redo-start" onClick={() => startRedoSession(redo.map((e) => e.id))}>
@@ -143,13 +143,15 @@ export function Library() {
         })}
       </div>
       <footer className="mk-foot">Innehållet är avskrivet från din egen bok för eget bruk. Allt du gör sparas bara i den här webbläsaren – gör en backup under Inställningar → Data.</footer>
-      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <SettingsDialog initialTab={settingsOpen} onClose={() => setSettingsOpen(false)} />}
       <ThemeEditor />
     </div>
   )
 }
 
-export function Nav({ streak, onSettings, active }: { streak: number; onSettings: () => void; active: 'home' | 'chapter' | 'learn' | 'stats' }) {
+export type NavPage = 'home' | 'chapter' | 'learn' | 'practice' | 'formulas' | 'friends' | 'stats'
+
+export function Nav({ streak, onSettings, active }: { streak: number; onSettings: () => void; active: NavPage }) {
   const subject = useSubject()
   const content = useContent()
   const firstChapter = content?.index.chapters[0]?.id ?? (subject === 'fysik' ? 102 : 1)
@@ -170,6 +172,12 @@ export function Nav({ streak, onSettings, active }: { streak: number; onSettings
         </a>
         <a className={active === 'learn' ? 'on' : ''} href="#/lar">
           Lär dig
+        </a>
+        <a className={active === 'practice' ? 'on' : ''} href="#/ova">
+          Öva
+        </a>
+        <a className={active === 'formulas' ? 'on' : ''} href="#/formler">
+          Formler
         </a>
         <a className={active === 'stats' ? 'on' : ''} href="#/statistik">
           Statistik

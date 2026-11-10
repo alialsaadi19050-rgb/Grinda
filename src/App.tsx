@@ -5,12 +5,17 @@ import { ChapterPage } from './library/ChapterPage.tsx'
 import { StatsPage } from './library/StatsPage.tsx'
 import { Login } from './vault/Login.tsx'
 import { SubjectPicker } from './subject/SubjectPicker.tsx'
+import { Celebrator } from './game/Celebrator.tsx'
+import { useReadability } from './settings/readability.ts'
 import { restoreSession, useVaultStatus } from './vault/vault.ts'
 
 // Uppgiftssidan (skrivyta, mattefält) och granskningen laddas först när de behövs.
 const ExercisePage = lazy(() => import('./exercise/ExercisePage.tsx').then((m) => ({ default: m.ExercisePage })))
 const LessonPage = lazy(() => import('./lessons/LessonPage.tsx').then((m) => ({ default: m.LessonPage })))
 const LessonsIndex = lazy(() => import('./lessons/LessonsIndex.tsx').then((m) => ({ default: m.LessonsIndex })))
+const PracticePage = lazy(() => import('./practice/PracticePage.tsx').then((m) => ({ default: m.PracticePage })))
+const GeneratorPage = lazy(() => import('./practice/GeneratorPage.tsx').then((m) => ({ default: m.GeneratorPage })))
+const FormulaPage = lazy(() => import('./formulas/FormulaPage.tsx').then((m) => ({ default: m.FormulaPage })))
 const ReviewPage = lazy(() => import('./review/ReviewPage.tsx').then((m) => ({ default: m.ReviewPage })))
 const loading = <div className="mk-loading">Laddar …</div>
 
@@ -19,10 +24,16 @@ restoreSession()
 const routeOf = () => location.hash.replace(/^#\/?/, '').split('?')[0]
 
 export function App() {
+  useReadability()
   const vault = useVaultStatus()
   if (vault === 'checking') return loading
   if (vault === 'locked') return <Login />
-  return <Routes />
+  return (
+    <>
+      <Routes />
+      <Celebrator />
+    </>
+  )
 }
 
 function Routes() {
@@ -72,6 +83,24 @@ function Routes() {
     )
   if (route.startsWith('kapitel')) return <ChapterPage key={location.hash} chapterId={Number(route.split('/')[1] ?? 1) || 1} />
   if (route === 'statistik') return <StatsPage />
+  if (route === 'ova')
+    return (
+      <Suspense fallback={loading}>
+        <PracticePage />
+      </Suspense>
+    )
+  if (route.startsWith('ova/nya/'))
+    return (
+      <Suspense fallback={loading}>
+        <GeneratorPage key={route} id={decodeURIComponent(route.slice('ova/nya/'.length))} />
+      </Suspense>
+    )
+  if (route === 'formler')
+    return (
+      <Suspense fallback={loading}>
+        <FormulaPage />
+      </Suspense>
+    )
   if (route === 'hem') return <Library />
   return <SubjectPicker />
 }

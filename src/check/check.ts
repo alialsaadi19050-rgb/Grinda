@@ -198,7 +198,35 @@ export function checkQuantity(a: NumberAnswer & { unit: string }, raw: string): 
     if (t !== 0 && Math.abs(u / t / k - 1) <= tol) return wrong('Talet är fel med en tiopotens. Kontrollera enhetsomvandlingen (t.ex. cm → m, g → kg).')
   }
   if (t !== 0 && Math.abs(u - t) / Math.abs(t) < 0.08) return wrong('Nära! Kontrollera avrundningen eller räkna med fler decimaler.')
-  return wrong()
+  return wrong(quantityHint(u, t, a.unit))
+}
+
+/**
+ * Vanliga fel i fysiksvar: känner igen när svaret skiljer sig från facit på ett sätt som
+ * pekar ut vad som gått snett (en tvåa, 2π, g, en glömd rot …).
+ */
+export function quantityHint(u: number, t: number, unit?: string): string | undefined {
+  if (!t || !u || !Number.isFinite(u)) return undefined
+  const r = u / t
+  const is = (x: number) => Math.abs(r / x - 1) <= 0.015
+  if (unit === '°' || unit === 'grader') {
+    if (is(Math.PI / 180)) return 'Räknaren verkar vara inställd på radianer. Byt till grader (DEG) och räkna om.'
+    if (r > 0 && Math.abs((u + t) / 90 - 1) <= 0.01) return 'Din vinkel och den rätta blir tillsammans 90°. Mäts vinkeln mot normalen eller mot ytan?'
+  }
+  if (is(2)) return 'Ditt svar är dubbelt så stort som det rätta. Har en tvåa kommit med i onödan – eller ska något halveras (halva våglängden, ljud som går fram och tillbaka, amplituden är halva avståndet mellan vändlägena)?'
+  if (is(0.5)) return 'Ditt svar är hälften av det rätta. Saknas en faktor 2 (t.ex. i $\\lambda = 2l$ för grundtonen, eller ½ som inte ska vara med)?'
+  if (is(4) || is(0.25)) return 'Svaret skiljer sig med en faktor 4. Har en tvåa kvadrerats, eller har du blandat ihop $\\frac{\\lambda}{2}$ och $\\frac{\\lambda}{4}$ (öppen och halvöppen pipa)?'
+  if (is(2 * Math.PI)) return 'Svaret är $2\\pi$ gånger för stort. Har du blandat ihop vinkelhastigheten $\\omega$ och frekvensen $f$, eller ska du dela med $2\\pi$?'
+  if (is(1 / (2 * Math.PI))) return 'Svaret är $2\\pi$ gånger för litet. Saknas $2\\pi$ (t.ex. $\\omega = 2\\pi f$ eller $T = 2\\pi\\sqrt{\\ldots}$)?'
+  if (is(Math.PI) || is(1 / Math.PI)) return 'Svaret skiljer sig med en faktor $\\pi$. Kontrollera var $\\pi$ ska vara med i formeln.'
+  if (is(9.82) || is(9.81)) return 'Svaret är ungefär 9,82 gånger för stort – har $g$ kommit med i onödan?'
+  if (is(1 / 9.82) || is(1 / 9.81)) return 'Svaret är ungefär 9,82 gånger för litet. Har du glömt $g$ (tyngden är $mg$)?'
+  if (t > 0 && u > 0 && Math.abs(t - 1) > 0.1) {
+    if (Math.abs(u / (t * t) - 1) <= 0.03) return 'Du verkar ha glömt att dra roten ur.'
+    if (Math.abs(u / Math.sqrt(t) - 1) <= 0.015) return 'Du verkar ha dragit roten ur en gång för mycket – eller glömt att kvadrera.'
+    if (Math.abs(u * t - 1) <= 0.03) return 'Det där är det inverterade värdet. Har du vänt på ett bråk?'
+  }
+  return undefined
 }
 
 export function checkNumber(a: NumberAnswer, raw: string): CheckResult {

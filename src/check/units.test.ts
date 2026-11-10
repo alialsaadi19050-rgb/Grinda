@@ -36,3 +36,25 @@ describe('enheter', () => {
     expect(checkAnswer(q('48.6', '°'), '49°').status).toBe('correct')
   })
 })
+
+describe('vanliga fel i fysiksvar', () => {
+  const k = { type: 'number', value: '70', unit: 'N/m' } as const
+  const hint = (a: Parameters<typeof checkAnswer>[0], input: string) => {
+    const r = checkAnswer(a, input)
+    expect(r.status).toBe('incorrect')
+    return r.hint ?? ''
+  }
+  it('känner igen en faktor 2, 2π, g, glömd rot och inverterat värde', () => {
+    expect(hint(k, '140 N/m')).toMatch(/dubbelt/)
+    expect(hint(k, '35 N/m')).toMatch(/hälften/)
+    expect(hint(k, '440 N/m')).toContain('gånger för stort')
+    expect(hint(k, '7,13 N/m')).toMatch(/glömt \$g\$/)
+    expect(hint({ type: 'number', value: '2.5', unit: 'm/s' }, '6,25 m/s')).toMatch(/roten/)
+    expect(hint({ type: 'number', value: '0.8', unit: 's' }, '1,25 s')).toMatch(/inverterade/)
+    expect(hint({ type: 'number', value: '14.5', unit: '°' }, '0,253°')).toMatch(/radianer/)
+    expect(hint({ type: 'number', value: '14.5', unit: '°' }, '75,5°')).toMatch(/90°/)
+  })
+  it('säger inget särskilt när felet inte följer ett mönster', () => {
+    expect(checkAnswer(k, '93 N/m').hint).toBeUndefined()
+  })
+})

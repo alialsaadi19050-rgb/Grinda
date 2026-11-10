@@ -17,6 +17,14 @@ export async function loadContent(): Promise<Content> {
   return { index, sections, exercises: sections.flatMap((s) => s.exercises) }
 }
 
+let contentPromise: Promise<Content> | null = null
+/** Innehållet laddas en gång och delas av sidorna som bara läser det. */
+export function loadContentOnce(): Promise<Content> {
+  contentPromise ??= loadContent()
+  contentPromise.catch(() => (contentPromise = null))
+  return contentPromise
+}
+
 export const pageImageUrl = (index: ContentIndex, page: number, facit = false) => {
   const file = (facit ? index.facitPages : index.pages)[String(page)]
   return file ? url(file) : null

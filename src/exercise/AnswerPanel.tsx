@@ -66,7 +66,7 @@ export function inputKind(a: Answer): { mode: 'math' | 'text' | 'buttons' | 'sel
   }
 }
 
-export function AnswerPanel({ ex, panelRef, next, onRedo, redoLabel }: { ex: Exercise; panelRef: React.RefObject<HTMLElement | null>; next?: Exercise; onRedo?: (blank: boolean) => void; redoLabel?: string }) {
+export function AnswerPanel({ ex, panelRef, next, onRedo, redoLabel, footer, onAllSolved }: { ex: Exercise; panelRef: React.RefObject<HTMLElement | null>; next?: Exercise; onRedo?: (blank: boolean) => void; redoLabel?: string; /** Ersätter ”Nästa uppgift”. */ footer?: React.ReactNode; onAllSolved?: () => void }) {
   const [history, setHistory] = useState<Attempt[] | null>(null)
   const [solved, setSolved] = useState<Set<number>>(new Set())
   const [confirmRedo, setConfirmRedo] = useState(false)
@@ -124,7 +124,11 @@ export function AnswerPanel({ ex, panelRef, next, onRedo, redoLabel }: { ex: Exe
             index={i}
             part={p}
             previous={history.filter((a) => a.part === i)}
-            onSolved={() => setSolved((s) => new Set(s).add(i))}
+            onSolved={() => {
+              const all = new Set(solved).add(i)
+              setSolved(all)
+              if (all.size === ex.parts.length && solved.size < ex.parts.length) onAllSolved?.()
+            }}
             onAttempt={() => setActive(true)}
           />
         ))}
@@ -132,7 +136,8 @@ export function AnswerPanel({ ex, panelRef, next, onRedo, redoLabel }: { ex: Exe
         <p className="ex-kbd">
           <kbd>Enter</kbd> kontrollera · <kbd>N</kbd> nästa uppgift
         </p>
-        {next && (
+        {footer}
+        {!footer && next && (
           <a className={`mk-btn-primary ex-next ${solved.size === ex.parts.length ? 'ready' : ''}`} href={`#/uppgift/${encodeURIComponent(next.id)}`}>
             Nästa uppgift <ChevronRight size={18} />
           </a>

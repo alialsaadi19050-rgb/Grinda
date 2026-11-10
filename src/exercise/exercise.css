@@ -1125,3 +1125,19 @@ kbd {
   color: var(--text-dim);
   font: 600 12.5px/1.4 var(--font-ui);
 }
+
+/* Länkar under uppgiften: genomgång och nya siffror */
+.ex-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-self: flex-start;
+}
+.ex-plain-problem .ex-links {
+  align-self: center;
+  justify-content: center;
+}
+.ex-lesson.alt {
+  background: rgba(var(--fg-rgb), 0.08);
+  color: var(--text);
+}

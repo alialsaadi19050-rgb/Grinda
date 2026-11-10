@@ -4,12 +4,15 @@ import { SettingsDialog } from '../settings/SettingsDialog.tsx'
 import { useProgress } from '../progress/progress.ts'
 import { Flame } from '../design/icons.tsx'
 import { Nav, Ring, sectionLabel, useContent } from './Library.tsx'
+import { BadgeGrid, WeekCard } from '../game/GameStrip.tsx'
+import { useGame } from '../game/useGame.ts'
 
 const DAYS = ['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör']
 
 export function StatsPage() {
   const content = useContent()
   const progress = useProgress(content?.exercises)
+  const game = useGame()
   const [settingsOpen, setSettingsOpen] = useState<null | 'data' | 'tablet'>(null)
   if (!content || !progress) return <div className="mk-loading">Laddar …</div>
 
@@ -25,6 +28,23 @@ export function StatsPage() {
       <Nav streak={progress.streakDays} onSettings={() => setSettingsOpen('tablet')} active="stats" />
       <main className="stp">
         <h1 className="ch-title">Statistik</h1>
+
+        {game && (
+          <a className="gm-card stp-level" href="#/ova" style={{ marginTop: 26 }}>
+            <span className="gm-level">{game.level.level}</span>
+            <div>
+              <strong>
+                Nivå {game.level.level} · {game.level.name}
+              </strong>
+              <small>
+                {game.xp} XP totalt · {game.level.span - game.level.into} XP kvar till nivå {game.level.level + 1}
+              </small>
+              <span className="gm-xpbar">
+                <span style={{ width: `${(100 * game.level.into) / game.level.span}%` }} />
+              </span>
+            </div>
+          </a>
+        )}
 
         <div className="stp-cards">
           <div className="stp-card big">
@@ -49,6 +69,13 @@ export function StatsPage() {
             <span>uppgifter klara totalt</span>
           </div>
         </div>
+
+        {game && (
+          <section className="stp-section">
+            <h2>Veckan som gick</h2>
+            <WeekCard game={game} />
+          </section>
+        )}
 
         <section className="stp-section">
           <h2>De senaste sju dagarna</h2>
@@ -104,6 +131,19 @@ export function StatsPage() {
             ))}
           </div>
         </section>
+
+        {game && (
+          <section className="stp-section">
+            <h2>
+              Märken{' '}
+              <small style={{ color: 'var(--text-dim)', fontSize: 16 }}>
+                {game.badges.filter((b) => b.earned).length} av {game.badges.length}
+              </small>
+            </h2>
+            <p className="mk-row-note">Märkena gäller båda ämnena. XP får du för rätta svar: mer för rätt på första försöket och för svårare nivåer, lite mindre för repetition.</p>
+            <BadgeGrid badges={game.badges} />
+          </section>
+        )}
 
         <section className="stp-section">
           <h2>Din data</h2>
