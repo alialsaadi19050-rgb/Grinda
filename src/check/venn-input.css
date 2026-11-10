@@ -15,7 +15,7 @@
   display: inline-flex;
   padding: 2px;
   border-radius: 999px;
-  background: rgba(var(--fg-rgb), 0.07);
+  background: var(--surface-2);
 }
 .venn-in-count button {
   padding: 4px 10px;
@@ -40,7 +40,7 @@
   padding: 0;
   border: 0;
   border-radius: 8px;
-  background: rgba(var(--fg-rgb), 0.08);
+  background: var(--surface-2);
   color: var(--text);
   font: 750 15px/1 var(--font-book);
   text-align: center;

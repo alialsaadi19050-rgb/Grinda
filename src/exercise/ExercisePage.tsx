@@ -5,7 +5,8 @@ import { setSubject, subjectOf } from '../subject/subject.ts'
 import { loadContent, type Content } from '../content/load.ts'
 import { MathText } from '../ui/MathText.tsx'
 import { Figures } from '../ui/Figure.tsx'
-import { Bookmark, CalculatorIcon, ChevronLeft, ChevronRight, Collapse, Gear, Mute, Send, Sound } from '../design/icons.tsx'
+import { Bookmark, CalculatorIcon, ChevronLeft, ChevronRight, Collapse, Gear, More, Mute, Send, Sigma, Sound } from '../design/icons.tsx'
+import { FormulaDrawer } from '../formulas/FormulaDrawer.tsx'
 import { ShareDialog } from '../social/ShareDialog.tsx'
 import { ReportDialog } from '../admin/ReportDialog.tsx'
 import { useCanInvite } from '../vault/InviteTab.tsx'
@@ -34,6 +35,8 @@ export function ExercisePage({ id }: { id: string }) {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [calcOpen, setCalcOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [formulasOpen, setFormulasOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const isAdmin = useCanInvite()
   const ink = useRef<InkSurfaceHandle>(null)
@@ -144,6 +147,9 @@ export function ExercisePage({ id }: { id: string }) {
         case 'bookmark':
           toggleBookmark(id)
           break
+        case 'formulas':
+          setFormulasOpen((o) => !o)
+          break
       }
     }
     window.addEventListener('keydown', onKey)
@@ -214,9 +220,14 @@ export function ExercisePage({ id }: { id: string }) {
   return (
     <div className={`ex grain ${zone.enabled && !plain ? 'zone-mode' : ''} ${plain ? 'plain' : ''}`}>
       <header className="ex-top">
-        <a className="ex-back" href={`#/kapitel/${ex.chapter}?avsnitt=${encodeURIComponent(ex.section)}`}>
-          <ChevronLeft size={18} /> {section ? (section.section.includes('.') ? `${section.section} ${section.title}` : section.title) : 'Tillbaka'}
-        </a>
+        <div className="ex-crumbs">
+          <a className="ex-home" href="#/hem" aria-label="Till startsidan" title="Till startsidan">
+            g<span>.</span>
+          </a>
+          <a className="ex-back" href={`#/kapitel/${ex.chapter}?avsnitt=${encodeURIComponent(ex.section)}`}>
+            <ChevronLeft size={18} /> <span>{section ? (section.section.includes('.') ? `${section.section} ${section.title}` : section.title) : 'Tillbaka'}</span>
+          </a>
+        </div>
         {inSession && (
           <button
             className="ex-redo-end"
@@ -253,17 +264,9 @@ export function ExercisePage({ id }: { id: string }) {
               </button>
             ))}
           </div>
-          {!plain && (
-          <div className="ex-seg" role="radiogroup" aria-label="Papper">
-            {(['light', 'dark'] as const).map((p) => (
-              <button key={p} role="radio" aria-checked={settings.paper === p} className={settings.paper === p ? 'on' : ''} onClick={() => updateSettings({ paper: p })}>
-                {p === 'light' ? 'Ljust papper' : 'Mörkt papper'}
-              </button>
-            ))}
-          </div>
-          )}
-          <button className="ex-icon" onClick={() => updateSettings({ sound: !settings.sound })} aria-label={settings.sound ? 'Stäng av ljud' : 'Sätt på ljud'} title={settings.sound ? 'Ljud på' : 'Ljud av'}>
-            {settings.sound ? <Sound size={19} /> : <Mute size={19} />}
+          <button className={`ex-formulas ${formulasOpen ? 'on' : ''}`} onClick={() => setFormulasOpen((o) => !o)} aria-expanded={formulasOpen} title={`Formelblad för uppgiften (${settings.shortcuts.formulas})`}>
+            <Sigma size={17} />
+            <span>Formler</span>
           </button>
           <button className={`ex-icon ${calcOpen ? 'on' : ''}`} onClick={() => setCalcOpen((o) => !o)} aria-label="Miniräknare" aria-pressed={calcOpen} title={`Miniräknare (${settings.shortcuts.calculator})`}>
             <CalculatorIcon size={19} />
@@ -271,16 +274,56 @@ export function ExercisePage({ id }: { id: string }) {
           <button className="ex-icon" onClick={() => setShareOpen(true)} aria-label="Dela med en kompis" title="Dela uppgiften (och din uträkning) med en kompis">
             <Send size={18} />
           </button>
-          {isAdmin && (
-            <button className="ex-icon" onClick={() => setReportOpen(true)} aria-label="Rapportera fel" title="Rapportera fel i uppgiften (bara du ser den här knappen)">
-              <span aria-hidden="true" style={{ fontSize: 16 }}>
-                ⚑
-              </span>
+          <div className="ex-more-wrap">
+            <button className={`ex-icon ${moreOpen ? 'on' : ''}`} onClick={() => setMoreOpen((o) => !o)} aria-label="Fler val" aria-expanded={moreOpen} title="Fler val">
+              <More size={19} />
             </button>
-          )}
-          <button className="ex-icon" onClick={() => setSettingsOpen(true)} aria-label="Inställningar" title="Inställningar">
-            <Gear size={19} />
-          </button>
+            {moreOpen && (
+              <>
+                <div className="ex-more-shield" onClick={() => setMoreOpen(false)} />
+                <div className="ex-more" role="menu">
+                  {!plain && (
+                    <div className="ex-more-row">
+                      <span>Papper</span>
+                      <div className="ex-seg" role="radiogroup" aria-label="Papper">
+                        {(['light', 'dark'] as const).map((p) => (
+                          <button key={p} role="radio" aria-checked={settings.paper === p} className={settings.paper === p ? 'on' : ''} onClick={() => updateSettings({ paper: p })}>
+                            {p === 'light' ? 'Ljust' : 'Mörkt'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <button role="menuitem" onClick={() => updateSettings({ sound: !settings.sound })}>
+                    {settings.sound ? <Sound size={18} /> : <Mute size={18} />} {settings.sound ? 'Ljud på' : 'Ljud av'}
+                  </button>
+                  {isAdmin && (
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        setMoreOpen(false)
+                        setReportOpen(true)
+                      }}
+                    >
+                      <span aria-hidden="true" style={{ width: 18, textAlign: 'center' }}>
+                        ⚑
+                      </span>{' '}
+                      Rapportera fel
+                    </button>
+                  )}
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setMoreOpen(false)
+                      setSettingsOpen(true)
+                    }}
+                  >
+                    <Gear size={18} /> Inställningar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <button className="ex-icon" disabled={!prev} onClick={() => prev && go(prev.id)} aria-label="Föregående uppgift" title={`Föregående (${settings.shortcuts.prev})`}>
             <ChevronLeft size={20} />
           </button>
@@ -319,6 +362,7 @@ export function ExercisePage({ id }: { id: string }) {
       <Calculator open={calcOpen} onClose={() => setCalcOpen(false)} noCalculator={ex.calculator === false} />
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
       {shareOpen && <ShareDialog ex={ex} onClose={() => setShareOpen(false)} />}
+      {formulasOpen && <FormulaDrawer topic={ex.topic} chapter={ex.chapter} onClose={() => setFormulasOpen(false)} />}
       {reportOpen && <ReportDialog ex={ex} onClose={() => setReportOpen(false)} />}
       <ThemeEditor />
     </div>

@@ -27,6 +27,11 @@ body,
   margin: 0;
 }
 
+html,
+body {
+  /* Inget får göra sidan bredare än skärmen (då zoomar mobilen ut). */
+  overflow-x: clip;
+}
 body {
   background: var(--bg);
   color: var(--text);

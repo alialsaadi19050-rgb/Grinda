@@ -215,3 +215,65 @@ export const Template = (p: P) => (
     <circle cx="12" cy="12" r="5.5" strokeDasharray="2 2.5" />
   </svg>
 )
+export const Home = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-6h-6v6H5.5A1.5 1.5 0 0 1 4 19Z" />
+  </svg>
+)
+export const BookOpen = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2Z" />
+    <path d="M12 6.5v13" />
+  </svg>
+)
+export const Dumbbell = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
+  </svg>
+)
+export const Sigma = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M17.5 5.5h-11l6 6.5-6 6.5h11" />
+  </svg>
+)
+export const Users = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="9" cy="8.5" r="3.5" />
+    <path d="M2.5 19.5c.6-3.4 3.3-5.5 6.5-5.5s5.9 2.1 6.5 5.5" />
+    <path d="M16 5.2a3.5 3.5 0 0 1 0 6.6M18.2 14.4c1.7.8 2.9 2.6 3.3 5.1" />
+  </svg>
+)
+export const Chart = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 20V10M10 20V4M16 20v-7M21.5 20h-19" />
+  </svg>
+)
+export const Shield = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 3.5 5 6v5.5c0 4.3 2.9 7.8 7 9 4.1-1.2 7-4.7 7-9V6Z" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+)
+export const Sun = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" />
+  </svg>
+)
+export const Moon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+  </svg>
+)
+export const More = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="5.5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="18.5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+  </svg>
+)
+export const Swap = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5" />
+  </svg>
+)

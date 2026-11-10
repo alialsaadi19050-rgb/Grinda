@@ -28,7 +28,7 @@
 
   /* Sådant som skiljer mörkt och ljust läge men inte beror på färgvalen. */
   --shadow-k: 1;
-  --grain-opacity: 0.07;
+  --grain-opacity: 0.035;
   --grain-blend: overlay;
   --grain-filter: none;
   --venn-blend: screen;
@@ -38,7 +38,7 @@
 :root[data-theme='light'] {
   color-scheme: light;
   --shadow-k: 0.22;
-  --grain-opacity: 0.04;
+  --grain-opacity: 0;
   --grain-blend: multiply;
   --grain-filter: invert(1);
   --venn-blend: multiply;

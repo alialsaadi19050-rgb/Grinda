@@ -19,11 +19,29 @@ describe('tema', () => {
     }
   }
 
-  it('ljust läge är aldrig helt vitt', () => {
+  it('ljust läge: bakgrunden är papper, korten är ljusare än bakgrunden', () => {
     const t = buildTheme({ mode: 'light', softness: 0.5, ...PRESETS[0].settings })
     expect(t['--bg'].toLowerCase()).not.toBe('#ffffff')
-    expect(t['--bg-raised'].toLowerCase()).not.toBe('#ffffff')
+    const lum = (h: string) => hexToRgb(h).reduce((s, v) => s + v, 0)
+    expect(lum(t['--surface'])).toBeGreaterThan(lum(t['--bg']))
   })
+
+  it('mörkt läge är mjuk grafit, inte svart', () => {
+    const t = buildTheme({ mode: 'dark', softness: 0.5, ...PRESETS[0].settings })
+    expect(contrast(hexToRgb(t['--bg']), [0, 0, 0])).toBeGreaterThan(1.25)
+  })
+
+  for (const mode of modes) {
+    it(`${mode === 'dark' ? 'mörkt' : 'ljust'}: texten går att läsa på korten också`, () => {
+      for (const p of PRESETS) {
+        const t = buildTheme({ mode, softness: 0.5, ...p.settings })
+        const card = hexToRgb(t['--surface'])
+        expect(contrast(hexToRgb(t['--text']), card)).toBeGreaterThanOrEqual(7)
+        expect(contrast(hexToRgb(t['--text-dim']), card)).toBeGreaterThanOrEqual(4.5)
+        expect(contrast(hexToRgb(t['--accent-text']), card)).toBeGreaterThanOrEqual(4.5)
+      }
+    })
+  }
 
   it('godtycklig accentfärg fungerar, även mörk', () => {
     for (const accent of ['#000080', '#3a3a3a', '#ffff00', '#00ffff']) {

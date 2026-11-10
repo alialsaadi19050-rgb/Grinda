@@ -32,7 +32,7 @@
   height: 26px;
   border: 0;
   border-radius: 50%;
-  background: rgba(var(--fg-rgb), 0.07);
+  background: var(--surface-2);
   color: var(--text);
   font-size: 17px;
   line-height: 1;
@@ -52,7 +52,7 @@
   padding: 6px 11px;
   border: 0;
   border-radius: 999px;
-  background: rgba(var(--fg-rgb), 0.07);
+  background: var(--surface-2);
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
@@ -144,7 +144,7 @@
   padding: 9px 12px;
   border: 0;
   border-radius: 12px;
-  background: rgba(var(--fg-rgb), 0.07);
+  background: var(--surface-2);
   color: var(--text);
   font: inherit;
   font-size: 14px;

@@ -107,7 +107,7 @@
 .ls-meta span {
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(var(--fg-rgb), 0.07);
+  background: var(--surface-2);
   color: var(--text-dim);
 }
 
@@ -160,8 +160,8 @@
 .ls-check {
   padding: 18px 20px;
   border-radius: 16px;
-  background: rgba(var(--fg-rgb), 0.045);
-  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.09);
+  background: var(--surface);
+  box-shadow: var(--surface-shadow);
 }
 .ls-example header,
 .ls-check header {
@@ -178,7 +178,7 @@
   flex: none;
   padding: 3px 8px;
   border-radius: 6px;
-  background: rgba(var(--fg-rgb), 0.08);
+  background: var(--surface-2);
   font: 750 11px/1.4 var(--font-ui);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -277,7 +277,7 @@
   font-size: 13.5px;
 }
 .ls-btn.ghost {
-  background: rgba(var(--fg-rgb), 0.08);
+  background: var(--surface-2);
   color: var(--text);
   box-shadow: none;
 }
@@ -321,8 +321,9 @@
   gap: 12px;
   padding: 12px 16px;
   border-radius: 12px;
-  background: rgba(var(--fg-rgb), 0.05);
+  background: var(--surface);
   font-size: 16px;
+  box-shadow: var(--surface-shadow);
 }
 .ls-tip svg {
   flex: none;
@@ -332,10 +333,11 @@
 .ls-aside {
   padding: 18px 20px;
   border-radius: 16px;
-  background: rgba(var(--fg-rgb), 0.04);
+  background: var(--surface);
   border-left: 3px solid rgba(var(--fg-rgb), 0.2);
   font-size: 16px;
   color: var(--text-dim);
+  box-shadow: var(--surface-shadow);
 }
 .ls-aside-title {
   display: block;
@@ -348,7 +350,7 @@
   margin-top: 18px;
   padding: 26px 24px;
   border-radius: 20px;
-  background: rgba(var(--fg-rgb), 0.05);
+  background: var(--surface);
   box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.1);
   font-family: var(--font-ui);
 }
@@ -432,8 +434,8 @@
   gap: 16px;
   padding: 12px;
   border-radius: 18px;
-  background: rgba(var(--fg-rgb), 0.04);
-  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.07);
+  background: var(--surface);
+  box-shadow: var(--surface-shadow);
 }
 .li-card.done {
   box-shadow: inset 0 0 0 1.5px rgba(var(--accent-rgb), 0.35);
@@ -475,7 +477,7 @@
   align-self: flex-start;
   padding: 6px 11px;
   border-radius: 999px;
-  background: rgba(var(--fg-rgb), 0.07);
+  background: var(--surface-2);
   color: var(--text);
   font-size: 12.5px;
   font-weight: 700;

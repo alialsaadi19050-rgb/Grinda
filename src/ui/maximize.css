@@ -7,7 +7,7 @@
   padding: 0;
   border: 0;
   border-radius: 8px;
-  background: rgba(var(--fg-rgb), 0.07);
+  background: var(--surface-2);
   color: var(--text-dim);
 }
 .max-btn:hover {

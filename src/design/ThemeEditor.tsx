@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { applyTheme, buildTheme, DEFAULT_THEME, loadTheme, PRESETS, saveTheme, type ThemeSettings } from './theme.ts'
+import { applyTheme, buildTheme, DEFAULT_THEME, loadTheme, PRESETS, resolveMode, saveTheme, type ThemeSettings } from './theme.ts'
 import './theme-editor.css'
 
 /* Ett litet globalt lager för temat så att alla sidor ser samma val. */
@@ -26,7 +26,7 @@ export function useTheme(): ThemeSettings {
 /** Öppnar redigeraren från andra knappar, t.ex. kugghjulet i menyn. */
 export const openThemeEditor = () => window.dispatchEvent(new Event('matte:open-theme'))
 
-const PaletteIcon = () => (
+export const PaletteIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
     <path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-4-4-7.2-9-7.2Z" />
     <circle cx="7.5" cy="11" r="1.2" fill="currentColor" />
@@ -56,9 +56,6 @@ export function ThemeEditor() {
 
   return (
     <>
-      <button className="te-fab" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="theme-editor">
-        <PaletteIcon /> Färger
-      </button>
       {open && (
         <section id="theme-editor" className="te-panel" aria-label="Färger">
           <header>
@@ -69,9 +66,9 @@ export function ThemeEditor() {
           </header>
 
           <div className="te-seg" role="radiogroup" aria-label="Läge">
-            {(['dark', 'light'] as const).map((m) => (
+            {(['auto', 'light', 'dark'] as const).map((m) => (
               <button key={m} role="radio" aria-checked={t.mode === m} className={t.mode === m ? 'on' : ''} onClick={() => setTheme({ mode: m })}>
-                {m === 'dark' ? 'Mörkt' : 'Ljust'}
+                {m === 'auto' ? 'Som enheten' : m === 'dark' ? 'Mörkt' : 'Ljust'}
               </button>
             ))}
           </div>
@@ -120,9 +117,9 @@ export function ThemeEditor() {
             <input type="range" min={0} max={100} value={Math.round(t.bgTint * 100)} onChange={(e) => setTheme({ bgTint: Number(e.target.value) / 100 })} />
           </label>
           <label className="te-range">
-            <span>{t.mode === 'dark' ? 'Svärta' : 'Mjukhet'}</span>
+            <span>{resolveMode(t.mode) === 'dark' ? 'Mörkhet' : 'Mjukhet'}</span>
             <input type="range" min={0} max={100} value={Math.round(t.softness * 100)} onChange={(e) => setTheme({ softness: Number(e.target.value) / 100 })} />
-            <small>{t.mode === 'dark' ? 'Djupt svart ← → mjuk grafit' : 'Ljust vitt ← → mjukt papper'}</small>
+            <small>{resolveMode(t.mode) === 'dark' ? 'Mörk grafit ← → ljusare grafit' : 'Ljust vitt ← → mjukt papper'}</small>
           </label>
 
           <button className="te-reset" onClick={() => setTheme({ ...DEFAULT_THEME, mode: t.mode })}>

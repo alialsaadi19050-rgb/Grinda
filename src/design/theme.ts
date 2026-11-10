@@ -1,10 +1,13 @@
 // Tema som byggs av några få val (läge, accentfärg, bakgrundston, mjukhet).
 // Alla övriga färger räknas fram i OKLCH så att kontrasten alltid håller.
 
+/** Vilket läge som visas. */
 export type Mode = 'dark' | 'light'
+/** Vad du valt: ljust, mörkt eller samma som enheten (auto). */
+export type ModeChoice = Mode | 'auto'
 
 export interface ThemeSettings {
-  mode: Mode
+  mode: ModeChoice
   /** Accentfärg som hex, t.ex. "#ff6a2b". */
   accent: string
   /** Bakgrundens färgton i grader, 0–360. */
@@ -26,7 +29,10 @@ export const PRESETS: { id: string; name: string; settings: Omit<ThemeSettings, 
   { id: 'grafit', name: 'Grafit', settings: { accent: '#e9e7e2', bgHue: 60, bgTint: 0 } },
 ]
 
-export const DEFAULT_THEME: ThemeSettings = { mode: 'dark', ...PRESETS[0].settings, softness: 0.5 }
+export const DEFAULT_THEME: ThemeSettings = { mode: 'auto', ...PRESETS[0].settings, softness: 0.5 }
+
+/** Läget som faktiskt visas: auto följer enhetens inställning. */
+export const resolveMode = (m: ModeChoice): Mode => (m === 'auto' ? (typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : m)
 
 /* ---------- Färgmatematik: sRGB ↔ OKLCH ---------- */
 
@@ -113,28 +119,36 @@ const rgbList = (c: RGB) => c.map((v) => Math.round(v * 255)).join(', ')
 export function buildTheme(t: ThemeSettings): Record<string, string> {
   const accentRgb = hexToRgb(t.accent)
   const [aL, aC, aH] = rgbToOklch(accentRgb)
-  const dark = t.mode === 'dark'
-  const tint = 0.006 + t.bgTint * 0.03
+  const dark = resolveMode(t.mode) === 'dark'
   const H = t.bgHue
+  const tint = 0.004 + t.bgTint * 0.022
 
-  // Mörkt: softness 0 = nästan svart, 1 = mjukare grafit. Ljust: 0 = nästan vitt, 1 = mjukt papper.
-  const baseL = dark ? 0.13 + t.softness * 0.08 : 0.985 - t.softness * 0.06
-  const bg = oklch(baseL, tint, H)
-  const raised = oklch(dark ? baseL + 0.04 : Math.min(0.99, baseL + 0.012), tint * 0.8, H)
-  const sunken = oklch(dark ? baseL - 0.035 : baseL - 0.035, tint * 1.1, H)
-  const line = oklch(dark ? baseL + 0.1 : baseL - 0.085, tint * 1.2, H)
-  const text = ensureContrast(dark ? [0.95, 0.012, H] : [0.3, Math.min(0.03, tint * 1.6), H], bg, 7, dark ? 1 : -1)
-  const dim = ensureContrast(dark ? [0.72, 0.02, H] : [0.52, Math.min(0.035, tint * 1.6), H], bg, 4.6, dark ? 1 : -1)
-  const tint1 = oklch(dark ? baseL + 0.06 : baseL - 0.05, Math.min(0.12, aC * 0.45), aH)
-  const tint2 = oklch(dark ? baseL + 0.03 : baseL - 0.03, tint * 2.2, (H + 40) % 360)
+  // De två lägena är var sitt eget tema, inte varandras spegelbild.
+  // Ljust: varmt papper som bakgrund, vita kort med mjuka skuggor.
+  // Mörkt: mjuk grafit (inte svart), kort som är lite ljusare än bakgrunden.
+  const baseL = dark ? 0.215 + t.softness * 0.05 : 0.975 - t.softness * 0.03
+  const bg = oklch(baseL, dark ? tint * 0.9 : tint * 1.4, H)
+  const surface = dark ? oklch(baseL + 0.045, tint * 0.8, H) : oklch(Math.min(1, baseL + 0.03), tint * 0.25, H)
+  const surface2 = dark ? oklch(baseL + 0.085, tint * 0.8, H) : oklch(baseL - 0.028, tint * 1.6, H)
+  const raised = dark ? oklch(baseL + 0.06, tint * 0.8, H) : oklch(1, 0, H)
+  const sunken = dark ? oklch(baseL - 0.03, tint, H) : oklch(baseL - 0.045, tint * 1.6, H)
+  const line = dark ? oklch(baseL + 0.11, tint, H) : oklch(baseL - 0.09, tint * 1.6, H)
+  // Kontrasten mäts mot den svåraste ytan: kortet i mörkt läge (ljusare), bakgrunden i ljust (mörkare).
+  const hardest = dark ? surface : bg
+  const text = ensureContrast(dark ? [0.95, 0.01, H] : [0.26, Math.min(0.025, tint * 1.4), H], hardest, 8, dark ? 1 : -1)
+  const dim = ensureContrast(dark ? [0.76, 0.015, H] : [0.5, Math.min(0.03, tint * 1.6), H], hardest, 4.7, dark ? 1 : -1)
+  const tint1 = dark ? oklch(baseL + 0.05, Math.min(0.08, aC * 0.35), aH) : oklch(0.95, Math.min(0.05, aC * 0.3), aH)
+  const tint2 = dark ? oklch(baseL + 0.025, tint * 2, (H + 40) % 360) : oklch(0.96, 0.025, (H + 40) % 360)
 
-  // Accenten fylls som användaren valt. Text i accentfärg justeras för läsbarhet.
-  const accentText = ensureContrast([aL, aC, aH], bg, 4.5, dark ? 1 : -1)
-  const accent2 = oklch(dark ? Math.max(0.68, aL) : Math.min(0.7, aL), Math.max(0.1, aC * 0.9), (aH + 40) % 360)
-  const ink: RGB = contrast(accentRgb, [0, 0, 0]) >= contrast(accentRgb, [1, 1, 1]) ? oklch(0.18, 0.04, aH) : [1, 1, 1]
-  const danger = dark ? oklch(0.68, 0.19, 18) : oklch(0.56, 0.2, 22)
-  const dangerText = ensureContrast([dark ? 0.86 : 0.48, 0.08, 18], bg, 4.5, dark ? 1 : -1)
-  const heroTop = dark ? text : oklch(Math.min(0.62, aL), Math.min(0.2, aC), aH)
+  // Accenten fylls som du valt. Text i accentfärg justeras för läsbarhet.
+  const accentText = ensureContrast([aL, aC, aH], hardest, 4.6, dark ? 1 : -1)
+  const accent2 = oklch(dark ? Math.max(0.74, aL) : Math.min(0.62, aL), Math.max(0.1, aC * 0.85), (aH + 40) % 360)
+  const ink: RGB = contrast(accentRgb, [0, 0, 0]) >= contrast(accentRgb, [1, 1, 1]) ? oklch(0.2, 0.04, aH) : [1, 1, 1]
+  const danger = dark ? oklch(0.7, 0.17, 20) : oklch(0.57, 0.19, 22)
+  const dangerText = ensureContrast([dark ? 0.84 : 0.47, 0.09, 20], hardest, 4.6, dark ? 1 : -1)
+  const ok = dark ? oklch(0.78, 0.15, 150) : oklch(0.55, 0.14, 150)
+  const heroTop = dark ? text : oklch(Math.min(0.5, aL), Math.min(0.2, aC), aH)
+  const shadowRgb = dark ? '0, 0, 0' : rgbList(oklch(0.3, 0.03, H))
 
   return {
     '--bg': rgbToHex(bg),
@@ -142,23 +156,33 @@ export function buildTheme(t: ThemeSettings): Record<string, string> {
     '--bg-sunken': rgbToHex(sunken),
     '--bg-tint-1': rgbToHex(tint1),
     '--bg-tint-2': rgbToHex(tint2),
+    '--surface': rgbToHex(surface),
+    '--surface-2': rgbToHex(surface2),
+    '--surface-shadow': dark
+      ? `inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 10px 30px -18px rgba(0, 0, 0, 0.7)`
+      : `0 0 0 1px rgba(${shadowRgb}, 0.07), 0 1px 2px rgba(${shadowRgb}, 0.05), 0 8px 24px -14px rgba(${shadowRgb}, 0.2)`,
+    '--surface-shadow-hover': dark
+      ? `inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 16px 40px -18px rgba(0, 0, 0, 0.8)`
+      : `0 0 0 1px rgba(${shadowRgb}, 0.09), 0 2px 4px rgba(${shadowRgb}, 0.05), 0 16px 36px -16px rgba(${shadowRgb}, 0.26)`,
+    '--shadow-rgb': shadowRgb,
     '--line': rgbToHex(line),
     '--text': rgbToHex(text),
     '--text-dim': rgbToHex(dim),
     '--fg-rgb': rgbList(text),
     '--scrim-rgb': rgbList(bg),
-    '--glass-rgb': dark ? '255, 255, 255' : rgbList(raised),
+    '--glass-rgb': rgbList(surface),
     '--accent': t.accent,
     '--accent-rgb': rgbList(accentRgb),
     '--accent-text': rgbToHex(accentText),
     '--accent-2': rgbToHex(accent2),
     '--accent-ink': rgbToHex(ink),
-    '--accent-soft': `rgba(${rgbList(accentRgb)}, ${dark ? 0.14 : 0.12})`,
+    '--accent-soft': `rgba(${rgbList(accentRgb)}, ${dark ? 0.16 : 0.11})`,
     '--hero-num-top': rgbToHex(heroTop),
     '--danger': rgbToHex(danger),
     '--danger-rgb': rgbList(danger),
     '--danger-text': rgbToHex(dangerText),
-    '--ok': rgbToHex(accent2),
+    '--ok': rgbToHex(ok),
+    '--ok-rgb': rgbList(ok),
   }
 }
 
@@ -184,8 +208,22 @@ export function saveTheme(t: ThemeSettings) {
   }
 }
 
+let followSystem: (() => void) | null = null
+
 export function applyTheme(t: ThemeSettings, root: HTMLElement = document.documentElement) {
-  root.dataset.theme = t.mode
-  for (const [k, v] of Object.entries(buildTheme(t))) root.style.setProperty(k, v)
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', buildTheme(t)['--bg'])
+  const mode = resolveMode(t.mode)
+  root.dataset.theme = mode
+  const vars = buildTheme(t)
+  for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v)
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', vars['--bg'])
+  // Auto: byt när enheten byter mellan ljust och mörkt.
+  if (typeof matchMedia === 'function') {
+    const mq = matchMedia('(prefers-color-scheme: light)')
+    if (followSystem) mq.removeEventListener('change', followSystem)
+    followSystem = null
+    if (t.mode === 'auto') {
+      followSystem = () => applyTheme(t, root)
+      mq.addEventListener('change', followSystem)
+    }
+  }
 }

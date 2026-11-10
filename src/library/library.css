@@ -61,9 +61,9 @@
 }
 .mk-btn-ghost {
   color: var(--text);
-  background: rgba(var(--fg-rgb), 0.08);
+  background: var(--surface);
   backdrop-filter: blur(14px);
-  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.12);
+  box-shadow: var(--surface-shadow);
 }
 .mk-btn-ghost:hover {
   background: rgba(var(--fg-rgb), 0.14);
@@ -138,11 +138,11 @@
 /* ---------- Hjälteytan ---------- */
 .mk-hero {
   position: relative;
-  min-height: min(88vh, 860px);
+  min-height: min(62vh, 600px);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 120px clamp(16px, 4vw, 56px) 36px;
+  padding: 100px clamp(16px, 4vw, 56px) 28px;
   overflow: hidden;
   isolation: isolate;
 }
@@ -183,7 +183,7 @@
 }
 .mk-hero-num {
   margin: 0;
-  font: 800 clamp(96px, 15vw, 200px) / 0.82 var(--font-display);
+  font: 800 clamp(72px, 10vw, 136px) / 0.86 var(--font-display);
   letter-spacing: -0.06em;
   background: linear-gradient(180deg, var(--hero-num-top) 30%, rgba(var(--accent-rgb), 0.85));
   -webkit-background-clip: text;
@@ -278,9 +278,9 @@
   gap: 14px;
   padding: 14px 18px;
   border-radius: 16px;
-  background: rgba(var(--fg-rgb), 0.05);
+  background: var(--surface);
   backdrop-filter: blur(16px);
-  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.07);
+  box-shadow: var(--surface-shadow);
 }
 .mk-stat strong {
   display: block;
@@ -660,9 +660,6 @@
 
 /* ---------- Surfplatta ---------- */
 @media (max-width: 1000px) {
-  .mk-nav nav {
-    display: none;
-  }
   .mk-hero-inner {
     grid-template-columns: 1fr;
   }
@@ -689,7 +686,7 @@
 }
 :root[data-theme='light'] .mk-stat,
 :root[data-theme='light'] .mk-btn-ghost {
-  background: rgba(var(--glass-rgb), 0.7);
+  background: var(--surface);
 }
 :root[data-theme='light'] .mk-tile-card {
   background: linear-gradient(150deg, var(--bg-raised), var(--bg-sunken));
@@ -745,7 +742,7 @@ a.mk-stat:hover {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: 130px clamp(16px, 4vw, 56px) 40px;
+  padding: 100px clamp(16px, 4vw, 56px) 40px;
 }
 .ch-hero-inner {
   display: flex;
@@ -813,8 +810,8 @@ a.mk-stat:hover {
   border-radius: 14px;
   text-align: left;
   color: var(--text);
-  background: rgba(var(--fg-rgb), 0.05);
-  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.07);
+  background: var(--surface);
+  box-shadow: var(--surface-shadow);
   font-weight: 700;
 }
 .ch-section .mk-bar {
@@ -850,7 +847,7 @@ a.mk-stat:hover {
   padding: 6px 13px;
   border: 0;
   border-radius: 999px;
-  background: rgba(var(--fg-rgb), 0.06);
+  background: var(--surface-2);
   color: var(--text-dim);
   font-weight: 650;
   font-size: 13.5px;
@@ -884,7 +881,7 @@ a.mk-stat:hover {
 
 /* ---------- Statistik ---------- */
 .stp {
-  padding: 120px clamp(16px, 4vw, 56px) 80px;
+  padding: 96px clamp(16px, 4vw, 56px) 80px;
   max-width: 1100px;
 }
 .stp-cards {
@@ -898,11 +895,11 @@ a.mk-stat:hover {
   gap: 6px;
   padding: 20px;
   border-radius: 18px;
-  background: rgba(var(--glass-rgb), 0.06);
-  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.08);
+  background: var(--surface);
+  box-shadow: var(--surface-shadow);
 }
 :root[data-theme='light'] .stp-card {
-  background: rgba(var(--glass-rgb), 0.7);
+  background: var(--surface);
 }
 .stp-card strong {
   font: 800 44px/1 var(--font-display);
@@ -971,9 +968,10 @@ a.mk-stat:hover {
   gap: 14px;
   padding: 12px 16px;
   border-radius: 12px;
-  background: rgba(var(--fg-rgb), 0.04);
+  background: var(--surface);
   color: inherit;
   text-decoration: none;
+  box-shadow: var(--surface-shadow);
 }
 a.stp-row:hover {
   box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.5);
@@ -987,7 +985,7 @@ a.stp-row:hover {
 .stp-bar {
   height: 8px;
   border-radius: 8px;
-  background: rgba(var(--fg-rgb), 0.08);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .stp-bar span {
@@ -1119,55 +1117,16 @@ a.stp-row:hover {
   border-color: rgba(var(--accent-rgb), 0.6);
 }
 
-/* ---------- Menyn på surfplatta och mobil: en rad längst ner ---------- */
-@media (max-width: 1000px) {
-  .mk-nav nav {
-    position: fixed;
-    inset: auto 0 0 0;
-    z-index: 60;
-    display: flex;
-    justify-content: space-between;
-    gap: 4px;
-    padding: 8px max(10px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));
-    overflow-x: auto;
-    scrollbar-width: none;
-    background: rgba(var(--scrim-rgb), 0.88);
-    backdrop-filter: blur(18px);
-    box-shadow: 0 -1px 0 rgba(var(--fg-rgb), 0.08);
-  }
-  .mk-nav nav::-webkit-scrollbar {
-    display: none;
-  }
-  .mk-nav nav a {
-    flex: 1 0 auto;
-    padding: 9px 12px;
-    border-radius: 12px;
-    font-size: 14px;
-    text-align: center;
-    white-space: nowrap;
-  }
-  .mk-nav nav a.on {
-    background: var(--accent-soft);
-    color: var(--accent-text);
-  }
-  :root[data-theme='light'] .mk-nav nav {
-    background: rgba(var(--glass-rgb), 0.9);
-  }
-  .mk-nav {
-    gap: 12px;
-  }
-  .gm-toasts {
-    bottom: 76px;
-  }
+
+/* ---------- Ljust läge: hjälteytan som ett ljust kort i stället för en mörk affisch ---------- */
+:root[data-theme='light'] .mk-hero-art {
+  opacity: 0.55;
 }
-@media (max-width: 1000px) {
-  /* Plats för menyn längst ner. */
-  .mk main,
-  .mk .mk-rows {
-    padding-bottom: 110px;
-  }
-  .so-chat {
-    height: calc(100vh - 300px);
-    min-height: 420px;
-  }
+:root[data-theme='light'] .mk-hero-shade {
+  background:
+    linear-gradient(90deg, var(--bg) 0%, rgba(var(--scrim-rgb), 0.7) 40%, rgba(var(--scrim-rgb), 0.15) 80%),
+    linear-gradient(0deg, var(--bg) 0%, transparent 55%);
+}
+:root[data-theme='light'] .mk-hero-num {
+  filter: none;
 }

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { filterContent, subjectName, useSubject } from '../subject/subject.ts'
+import { filterContent, useSubject } from '../subject/subject.ts'
 import type { Exercise } from '../content/types.ts'
 import { loadContentOnce, type Content } from '../content/load.ts'
 import { CoverArt, Poster, motifFor } from '../design/Cover.tsx'
-import { Bookmark, Check, ChevronLeft, ChevronRight, Flame, Gear, Play, Target } from '../design/icons.tsx'
+import { Bookmark, Check, ChevronLeft, ChevronRight, Play } from '../design/icons.tsx'
 import { savedFirst, useBookmarks } from '../bookmarks/bookmarks.ts'
 import { lessonHref, useLessons } from '../lessons/data.ts'
 import { startRedoSession } from '../exercise/redoSession.ts'
@@ -14,8 +14,7 @@ import { ThemeEditor } from '../design/ThemeEditor.tsx'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
 import { GameStrip } from '../game/GameStrip.tsx'
 import { AnnouncementBanner } from '../admin/AnnouncementBanner.tsx'
-import { useInbox } from '../social/api.ts'
-import { useCanInvite } from '../vault/InviteTab.tsx'
+import { Nav as NavBar, type NavPage } from './Nav.tsx'
 import '../social/social.css'
 import { recommend, useProgress, type Progress, type Status } from '../progress/progress.ts'
 import './library.css'
@@ -70,7 +69,7 @@ export function Library() {
   return (
     <div className="mk grain">
       <Nav streak={progress.streakDays} onSettings={() => setSettingsOpen('tablet')} active="home" />
-      <Hero ex={featured} progress={progress} total={exercises.length} />
+      <Hero ex={featured} progress={progress} />
       <AnnouncementBanner />
       <GameStrip exercises={exercises} onGoal={() => setSettingsOpen('study')} />
 
@@ -154,67 +153,18 @@ export function Library() {
   )
 }
 
-export type NavPage = 'home' | 'chapter' | 'learn' | 'practice' | 'formulas' | 'friends' | 'stats' | 'admin'
+export type { NavPage }
 
-export function Nav({ streak, onSettings, active }: { streak: number; onSettings: () => void; active: NavPage }) {
+/** Menyn, med rätt kapitel för det valda ämnet. */
+export function Nav(props: { streak: number; onSettings: () => void; active: NavPage }) {
   const subject = useSubject()
   const content = useContent()
   const firstChapter = content?.index.chapters[0]?.id ?? (subject === 'fysik' ? 102 : 1)
-  const inbox = useInbox()
-  const unread = Object.values(inbox.unread).reduce((s, n) => s + n, 0)
-  const isAdmin = useCanInvite()
-  return (
-    <header className="mk-nav">
-      <a className="mk-logo" href="#/" title="Byt ämne">
-        grinda<span>.</span>
-      </a>
-      <a className="mk-subject" href="#/" title="Byt ämne">
-        {subjectName(subject)} <span aria-hidden="true">⇄</span>
-      </a>
-      <nav>
-        <a className={active === 'home' ? 'on' : ''} href="#/hem">
-          Hem
-        </a>
-        <a className={active === 'chapter' ? 'on' : ''} href={`#/kapitel/${firstChapter}`}>
-          Kapitel
-        </a>
-        <a className={active === 'learn' ? 'on' : ''} href="#/lar">
-          Lär dig
-        </a>
-        <a className={active === 'practice' ? 'on' : ''} href="#/ova">
-          Öva
-        </a>
-        <a className={active === 'formulas' ? 'on' : ''} href="#/formler">
-          Formler
-        </a>
-        <a className={active === 'friends' ? 'on' : ''} href="#/kompisar">
-          Kompisar
-          {unread > 0 && <b className="so-unread">{unread}</b>}
-        </a>
-        <a className={active === 'stats' ? 'on' : ''} href="#/statistik">
-          Statistik
-        </a>
-        {isAdmin && (
-          <a className={active === 'admin' ? 'on' : ''} href="#/admin">
-            Admin
-          </a>
-        )}
-      </nav>
-      <div className="mk-nav-right">
-        <span className="mk-streak" title="Dagar i rad">
-          <Flame size={16} /> {streak}
-        </span>
-        <button aria-label="Inställningar" onClick={onSettings}>
-          <Gear size={19} />
-        </button>
-      </div>
-    </header>
-  )
+  return <NavBar {...props} firstChapter={firstChapter} />
 }
 
-function Hero({ ex, progress, total }: { ex: Exercise; progress: Progress; total: number }) {
+function Hero({ ex, progress }: { ex: Exercise; progress: Progress }) {
   const p = progress.byExercise[ex.id]
-  const max = Math.max(1, ...progress.week)
   const kicker = p.status === 'attempted' ? 'Fortsätt räkna' : p.status === 'missed' ? 'Prova igen' : progress.solvedTotal ? 'Nästa uppgift' : 'Kom igång'
   return (
     <section className="mk-hero">
@@ -261,42 +211,6 @@ function Hero({ ex, progress, total }: { ex: Exercise; progress: Progress; total
         </a>
       </div>
 
-      <div className="mk-stats">
-        <div className="mk-stat">
-          <Flame size={22} className="mk-stat-icon flame" />
-          <div>
-            <strong>{progress.streakDays === 1 ? '1 dag' : `${progress.streakDays} dagar`}</strong>
-            <span>{progress.streakDays ? 'i rad – räkna idag för att hålla igång' : 'i rad – börja idag!'}</span>
-          </div>
-        </div>
-        <div className="mk-stat">
-          <div className="mk-spark" aria-hidden="true">
-            {progress.week.map((v, i) => (
-              <i key={i} style={{ height: `${12 + (v / max) * 88}%` }} className={i === progress.week.length - 1 ? 'today' : ''} />
-            ))}
-          </div>
-          <div>
-            <strong>{progress.solvedThisWeek} lösta</strong>
-            <span>uppgifter den här veckan</span>
-          </div>
-        </div>
-        <div className="mk-stat">
-          <Ring value={progress.accuracy ?? 0} />
-          <div>
-            <strong>{progress.accuracy === null ? '–' : `${Math.round(progress.accuracy * 100)} % rätt`}</strong>
-            <span>på första försöket</span>
-          </div>
-        </div>
-        <a className="mk-stat" href="#/statistik">
-          <Target size={22} className="mk-stat-icon" />
-          <div>
-            <strong>
-              {progress.solvedTotal} av {total}
-            </strong>
-            <span>uppgifter klara totalt</span>
-          </div>
-        </a>
-      </div>
     </section>
   )
 }

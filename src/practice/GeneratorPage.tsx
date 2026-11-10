@@ -1,7 +1,8 @@
 // En uppgift med nya siffror. ”Ge mig en till” slumpar nya tal för samma sorts uppgift.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Exercise } from '../content/types.ts'
-import { ChevronLeft, Gear, CalculatorIcon } from '../design/icons.tsx'
+import { ChevronLeft, Gear, CalculatorIcon, Sigma } from '../design/icons.tsx'
+import { FormulaDrawer } from '../formulas/FormulaDrawer.tsx'
 import { ThemeEditor } from '../design/ThemeEditor.tsx'
 import { Calculator } from '../calculator/Calculator.tsx'
 import { AnswerPanel } from '../exercise/AnswerPanel.tsx'
@@ -23,6 +24,7 @@ export function GeneratorPage({ id }: { id: string }) {
   const [count, setCount] = useState(1)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [calcOpen, setCalcOpen] = useState(false)
+  const [formulasOpen, setFormulasOpen] = useState(false)
   const lessons = useLessons()
   const panel = useRef<HTMLElement>(null)
   const more = useRef<HTMLAnchorElement>(null)
@@ -75,6 +77,10 @@ export function GeneratorPage({ id }: { id: string }) {
           <span className="ex-calc">Nya siffror · nr {count}</span>
         </div>
         <div className="ex-top-right">
+          <button className={`ex-formulas ${formulasOpen ? 'on' : ''}`} onClick={() => setFormulasOpen((o) => !o)} aria-expanded={formulasOpen} title="Formelblad">
+            <Sigma size={17} />
+            <span>Formler</span>
+          </button>
           <button className={`ex-icon ${calcOpen ? 'on' : ''}`} onClick={() => setCalcOpen((o) => !o)} aria-label="Miniräknare" aria-pressed={calcOpen} title="Miniräknare">
             <CalculatorIcon size={19} />
           </button>
@@ -107,6 +113,7 @@ export function GeneratorPage({ id }: { id: string }) {
         />
       </div>
       <Calculator open={calcOpen} onClose={() => setCalcOpen(false)} />
+      {formulasOpen && <FormulaDrawer topic={gen.topic} chapter={gen.subject === 'fysik' ? 102 : 1} onClose={() => setFormulasOpen(false)} />}
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
       <ThemeEditor />
     </div>
