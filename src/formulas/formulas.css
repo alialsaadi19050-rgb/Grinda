@@ -153,3 +153,9 @@
     margin-bottom: 8px;
   }
 }
+@media print {
+  .te-fab,
+  .gm-toasts {
+    display: none !important;
+  }
+}

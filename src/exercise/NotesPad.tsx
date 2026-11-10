@@ -56,6 +56,9 @@ export function NotesPad({ exerciseId }: { exerciseId: string }) {
     <section className="ex-notes" aria-label="Uträkning">
       <div className="ex-notes-head">
         <h2>Uträkning</h2>
+        <button className="ex-notes-print" type="button" onClick={() => window.print()} title="Skriv ut uppgiften och din uträkning, eller spara som PDF">
+          Skriv ut / PDF
+        </button>
         <span className="ex-notes-state" aria-live="polite">
           {state === 'saving' ? 'Sparar …' : state === 'saved' ? 'Sparat' : ''}
         </span>

@@ -3,7 +3,8 @@ import { InkCanvas, type InkStatus, type ToolState } from './InkCanvas.ts'
 import { HIGHLIGHT, INK, type Background, type HighlightColor, type InkColor, type Paper, type ShapeKind, type Stroke } from './types.ts'
 import { loadDrawing, saveDrawing } from '../storage/db.ts'
 import { getSettings, updateSettings, useSettings } from '../settings/settings.ts'
-import { ChevronLeft, Download, Eraser, FitAll, Grid, Hand, Highlighter, Lasso, Pen, Redo, ShapeEllipse, ShapeLine, ShapeRect, Shapes, Undo } from '../design/icons.tsx'
+import { ChevronLeft, Download, Eraser, FitAll, Grid, Hand, Highlighter, Lasso, Pen, Protractor, Redo, Ruler, ShapeEllipse, ShapeLine, ShapeRect, Shapes, Template, Undo } from '../design/icons.tsx'
+import { TEMPLATES } from './templates.ts'
 import './canvas.css'
 
 export interface InkSurfaceHandle {
@@ -44,10 +45,10 @@ export const InkSurface = forwardRef<InkSurfaceHandle, Props>(function InkSurfac
   const engine = useRef<InkCanvas | null>(null)
   const settings = useSettings()
   const [tools, setTools] = useState<ToolState>(settings.tools)
-  const [status, setStatus] = useState<InkStatus>({ canUndo: false, canRedo: false, selected: 0, activeTool: 'pen', zoom: 1 })
+  const [status, setStatus] = useState<InkStatus>({ canUndo: false, canRedo: false, selected: 0, activeTool: 'pen', zoom: 1, measuring: false })
   const [background, setBackground] = useState<Background>(settings.background)
   const [toolbarOpen, setToolbarOpen] = useState(true)
-  const [menu, setMenu] = useState<'bg' | 'export' | null>(null)
+  const [menu, setMenu] = useState<'bg' | 'export' | 'template' | null>(null)
   const [saved, setSaved] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [pressureHint, setPressureHint] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
@@ -170,6 +171,7 @@ export const InkSurface = forwardRef<InkSurfaceHandle, Props>(function InkSurfac
                 ['pen', Pen, 'Penna', settings.shortcuts.pen],
                 ['highlighter', Highlighter, 'Överstrykning', settings.shortcuts.highlighter],
                 ['shape', Shapes, 'Former: linje, rektangel och cirkel – håll in Shift för rak vinkel, kvadrat eller cirkel', settings.shortcuts.shape],
+                ['measure', Ruler, 'Linjal och gradskiva: mät längder och vinklar', settings.shortcuts.measure],
                 ['eraser', Eraser, 'Sudd – eller håll in pennans sidoknapp', settings.shortcuts.eraser],
                 ['lasso', Lasso, 'Markera och flytta', settings.shortcuts.lasso],
                 ['hand', Hand, 'Flytta runt på skrivytan – eller håll in mellanslag', settings.shortcuts.hand],
@@ -181,6 +183,21 @@ export const InkSurface = forwardRef<InkSurfaceHandle, Props>(function InkSurfac
             ))}
             <span className="ex-tools-sep" />
 
+            {tools.tool === 'measure' && (
+              <>
+                {(
+                  [
+                    ['ruler', Ruler, 'Linjal: dra för att mäta längd och vinkel (Shift låser till 15°)'],
+                    ['protractor', Protractor, 'Gradskiva: dra ut första benet från vinkelns spets, klicka sedan där andra benet går'],
+                  ] as const
+                ).map(([id, Icon, label]) => (
+                  <button key={id} className={tools.measure === id ? 'on' : ''} onClick={() => applyTools({ measure: id })} aria-label={label} title={label} aria-pressed={tools.measure === id}>
+                    <Icon size={19} />
+                  </button>
+                ))}
+                <span className="ex-tools-sep" />
+              </>
+            )}
             {tools.tool === 'shape' && (
               <>
                 {SHAPES.map(({ id, Icon, label }) => (
@@ -227,6 +244,9 @@ export const InkSurface = forwardRef<InkSurfaceHandle, Props>(function InkSurfac
             <button className={menu === 'bg' ? 'open' : ''} onClick={() => setMenu(menu === 'bg' ? null : 'bg')} aria-label="Bakgrund och sida" title="Bakgrund och sida" aria-expanded={menu === 'bg'}>
               <Grid size={19} />
             </button>
+            <button className={menu === 'template' ? 'open' : ''} onClick={() => setMenu(menu === 'template' ? null : 'template')} aria-label="Mallar" title="Rita in en mall: koordinatsystem, enhetscirkel, tallinje eller tabell" aria-expanded={menu === 'template'}>
+              <Template size={19} />
+            </button>
             <button className={menu === 'export' ? 'open' : ''} onClick={() => setMenu(menu === 'export' ? null : 'export')} aria-label="Exportera" title="Spara som PNG eller PDF" aria-expanded={menu === 'export'}>
               <Download size={19} />
             </button>
@@ -243,7 +263,25 @@ export const InkSurface = forwardRef<InkSurfaceHandle, Props>(function InkSurfac
 
       {menu && (
         <div className="ex-pop" role="menu" onPointerDown={(e) => e.stopPropagation()}>
-          {menu === 'bg' ? (
+          {menu === 'template' ? (
+            <>
+              {TEMPLATES.map((t) => (
+                <button
+                  key={t.id}
+                  role="menuitem"
+                  onClick={() => {
+                    setMenu(null)
+                    engine.current?.insertTemplate(t.id)
+                    setTools((x) => ({ ...x, tool: 'lasso' }))
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+              <hr />
+              <span className="ink-pop-note">Mallen hamnar mitt på det som syns och är markerad – dra i den för att flytta.</span>
+            </>
+          ) : menu === 'bg' ? (
             <>
               {BACKGROUNDS.map((b) => (
                 <button key={b.id} role="menuitemradio" aria-checked={background === b.id} className={background === b.id ? 'on' : ''} onClick={() => changeBackground(b.id)}>
@@ -277,6 +315,16 @@ export const InkSurface = forwardRef<InkSurfaceHandle, Props>(function InkSurfac
 
       <div className="ex-page-meta" aria-live="polite">
         {status.selected > 0 && <span className="ink-chip">{status.selected} markerade · Delete tar bort</span>}
+        {status.measuring && (
+          <>
+            <button onClick={() => engine.current?.commitMeasurement()} title="Gör mätningen till streck på skrivytan">
+              Rita in
+            </button>
+            <button onClick={() => engine.current?.clearMeasurement()} title="Ta bort mätningen (Esc)">
+              Ta bort mätning
+            </button>
+          </>
+        )}
         <button className="ink-fit" onClick={() => engine.current?.fitContent()} title="Visa allt du skrivit">
           <FitAll size={14} /> Visa allt
         </button>

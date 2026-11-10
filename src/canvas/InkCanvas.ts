@@ -7,7 +7,8 @@
 import { boxesOverlap, eraseFromStroke, lassoSelects, round, shapePoints, strokeBox, strokeHit, translateStroke, unionBox } from './geometry.ts'
 import { History, StrokeStore, type Change } from './history.ts'
 import { cachedPath, drawBackground, drawStroke, strokeColor, strokePath, type View } from './render.ts'
-import type { Background, Box, EraserMode, HighlightColor, InkColor, Paper, Point, ShapeKind, Stroke, Tool } from './types.ts'
+import type { Background, Box, EraserMode, HighlightColor, InkColor, MeasureKind, Paper, Point, ShapeKind, Stroke, Tool } from './types.ts'
+import { angleAt, arcPoints, fmtNum, measurementStrokes, rulerInfo, templateStrokes, type Measurement, type TemplateKind } from './templates.ts'
 import { ERASER_SIZES, HIGHLIGHTER_SIZES, PEN_SIZES } from './types.ts'
 
 /** Hur långt du kan zooma ut på den obegränsade skrivytan. */
@@ -23,6 +24,8 @@ export interface ToolState {
   eraserMode: EraserMode
   /** Vilken form formverktyget ritar. */
   shape: ShapeKind
+  /** Linjal eller gradskiva. */
+  measure: MeasureKind
 }
 
 export const DEFAULT_TOOLS: ToolState = {
@@ -34,6 +37,7 @@ export const DEFAULT_TOOLS: ToolState = {
   eraserSize: 1,
   eraserMode: 'stroke',
   shape: 'line',
+  measure: 'ruler',
 }
 
 export interface InkStatus {
@@ -43,6 +47,8 @@ export interface InkStatus {
   /** Verktyget som faktiskt används just nu (sidoknappen ger tillfälligt sudd). */
   activeTool: Tool
   zoom: number
+  /** Det finns en mätning på skrivytan (kan ritas in eller tas bort). */
+  measuring: boolean
 }
 
 export interface InkCallbacks {
@@ -60,6 +66,7 @@ type Action =
   | { kind: 'lasso'; pointerId: number; poly: [number, number][] }
   | { kind: 'move'; pointerId: number; start: [number, number]; delta: [number, number] }
   | { kind: 'pan'; pointerId: number; startClient: [number, number]; startView: View }
+  | { kind: 'measure'; pointerId: number }
 
 let idCounter = 0
 const newId = () => `${Date.now().toString(36)}${(idCounter++).toString(36)}${Math.random().toString(36).slice(2, 6)}`
@@ -95,6 +102,7 @@ export class InkCanvas {
   private raf = 0
   private pressure = { events: 0, varied: 0, warned: false }
   private cleanup: (() => void)[] = []
+  private measurement: Measurement | null = null
 
   constructor(private root: HTMLElement, private cb: InkCallbacks = {}, lowLatency = true) {
     this.el = document.createElement('canvas')
@@ -130,6 +138,7 @@ export class InkCanvas {
     const prev = this.tools.tool
     this.tools = { ...this.tools, ...patch }
     if (prev === 'lasso' && this.tools.tool !== 'lasso') this.clearSelection()
+    if (this.measurement && (this.tools.tool !== 'measure' || (patch.measure && patch.measure !== this.measurement.kind))) this.clearMeasurement()
     this.updateCursor()
     this.emitStatus()
   }
@@ -158,6 +167,40 @@ export class InkCanvas {
     this.history.commit({ removed: [...this.strokes], added: [] })
     this.selection.clear()
     this.afterChange()
+  }
+
+  /** Ritar in en mall mitt på det som syns, och markerar den så att den går att flytta. */
+  insertTemplate(kind: TemplateKind) {
+    const area = this.visibleArea()
+    const at: [number, number] = [(area.minX + area.maxX) / 2, (area.minY + area.maxY) / 2]
+    const added = templateStrokes(kind, at, this.tools.color, this.store.nextZ(), newId)
+    this.history.commit({ removed: [], added })
+    this.selection = new Set(added.map((s) => s.id))
+    this.tools = { ...this.tools, tool: 'lasso' }
+    this.afterChange()
+    this.updateCursor()
+  }
+
+  /** Gör mätningen till streck. */
+  commitMeasurement() {
+    const m = this.measurement
+    if (!m) return
+    const added = measurementStrokes(m, this.tools.color, this.store.nextZ(), newId)
+    this.measurement = null
+    if (added.length) {
+      this.history.commit({ removed: [], added })
+      this.afterChange()
+    } else {
+      this.invalidate()
+      this.emitStatus()
+    }
+  }
+
+  clearMeasurement() {
+    if (!this.measurement) return
+    this.measurement = null
+    this.invalidate()
+    this.emitStatus()
   }
 
   deleteSelection() {
@@ -331,6 +374,10 @@ export class InkCanvas {
     const ctx = this.ctx
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.drawImage(this.buffer, 0, 0)
+    if (this.measurement) {
+      this.applyView(ctx)
+      this.drawMeasurement(ctx, this.measurement)
+    }
     const a = this.action
     if (!a) return
     this.applyView(ctx)
@@ -366,6 +413,83 @@ export class InkCanvas {
     }
   }
 
+  /** Linjalen eller gradskivan, med mått, ovanpå skrivytan (sparas inte förrän du ritar in den). */
+  private drawMeasurement(ctx: CanvasRenderingContext2D, m: Measurement) {
+    const z = this.view.zoom
+    const accent = getComputedStyle(this.root).getPropertyValue('--accent').trim() || '#ff6a2b'
+    ctx.save()
+    ctx.strokeStyle = accent
+    ctx.fillStyle = accent
+    ctx.lineWidth = 2 / z
+    ctx.setLineDash([7 / z, 5 / z])
+    const seg = (p: [number, number], q: [number, number]) => {
+      ctx.beginPath()
+      ctx.moveTo(p[0], p[1])
+      ctx.lineTo(q[0], q[1])
+      ctx.stroke()
+    }
+    const dot = (p: [number, number]) => {
+      ctx.beginPath()
+      ctx.arc(p[0], p[1], 4 / z, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    const label = (text: string, at: [number, number]) => {
+      ctx.setLineDash([])
+      ctx.font = `700 ${14 / z}px Inter Variable, system-ui, sans-serif`
+      const w = ctx.measureText(text).width + 14 / z
+      const h = 24 / z
+      ctx.fillStyle = 'rgba(20, 16, 14, 0.85)'
+      ctx.beginPath()
+      ctx.roundRect(at[0] - w / 2, at[1] - h / 2, w, h, 8 / z)
+      ctx.fill()
+      ctx.fillStyle = '#fff'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(text, at[0], at[1] + 1 / z)
+      ctx.fillStyle = accent
+    }
+    if (m.kind === 'ruler') {
+      seg(m.a, m.b)
+      dot(m.a)
+      dot(m.b)
+      const r = rulerInfo(m)
+      // Små streck för varje ruta längs linjalen.
+      const len = Math.hypot(m.b[0] - m.a[0], m.b[1] - m.a[1])
+      if (len > 1 && r.squares < 200) {
+        ctx.setLineDash([])
+        const ux = (m.b[0] - m.a[0]) / len
+        const uy = (m.b[1] - m.a[1]) / len
+        const step = len / r.squares
+        for (let i = 1; i < r.squares; i++) {
+          const x = m.a[0] + ux * step * i
+          const y = m.a[1] + uy * step * i
+          const t = (i % 2 ? 4 : 7) / z
+          seg([x - uy * t, y + ux * t], [x + uy * t, y - ux * t])
+        }
+      }
+      label(`${fmtNum(r.cm)} cm · ${fmtNum(r.squares)} rutor · ${fmtNum(r.deg, 0)}°`, [(m.a[0] + m.b[0]) / 2, (m.a[1] + m.b[1]) / 2 - 22 / z])
+    } else {
+      seg(m.a, m.b)
+      dot(m.a)
+      if (m.c && Math.hypot(m.c[0] - m.a[0], m.c[1] - m.a[1]) > 2) {
+        seg(m.a, m.c)
+        const r = Math.min(46 / z, 0.45 * Math.hypot(m.b[0] - m.a[0], m.b[1] - m.a[1]), 0.45 * Math.hypot(m.c[0] - m.a[0], m.c[1] - m.a[1]))
+        const arc = arcPoints(m.a, m.b, m.c, r)
+        ctx.setLineDash([])
+        ctx.beginPath()
+        arc.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)))
+        ctx.stroke()
+        const deg = angleAt(m.a, m.b, m.c)
+        const mid = arc[Math.floor(arc.length / 2)]
+        const dx = mid[0] - m.a[0]
+        const dy = mid[1] - m.a[1]
+        const d = Math.hypot(dx, dy) || 1
+        label(`${fmtNum(deg)}°${m.waiting ? '' : ` (${fmtNum(180 - deg)}°)`}`, [m.a[0] + (dx / d) * (r + 30 / z), m.a[1] + (dy / d) * (r + 30 / z)])
+      } else label(m.waiting ? 'Klicka där andra benet ska gå' : 'Dra ut första benet', [m.b[0], m.b[1] - 22 / z])
+    }
+    ctx.restore()
+  }
+
   /* ---------- Markör som visar var pennan hamnar ---------- */
 
   private currentTool(): Tool {
@@ -386,7 +510,10 @@ export class InkCanvas {
     const z = this.view.zoom
     let d = 6
     let color = 'currentColor'
-    if (tool === 'pen' || tool === 'shape') {
+    if (tool === 'measure') {
+      d = 10
+      color = strokeColor({ tool: 'pen', color: 'red' }, this.paper)
+    } else if (tool === 'pen' || tool === 'shape') {
       d = Math.max(4, PEN_SIZES[this.tools.penSize] * z)
       color = strokeColor({ tool: 'pen', color: this.tools.color }, this.paper)
     } else if (tool === 'highlighter') {
@@ -430,7 +557,10 @@ export class InkCanvas {
         e.preventDefault()
       }
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.selection.size && !isTyping(e.target)) this.deleteSelection()
-      if (e.key === 'Escape') this.clearSelection()
+      if (e.key === 'Escape') {
+        this.clearSelection()
+        this.clearMeasurement()
+      }
     })
     on(window, 'keyup', (e: KeyboardEvent) => {
       if (e.code === 'Space') {
@@ -516,6 +646,20 @@ export class InkCanvas {
       }
       this.action = { kind: 'shape', stroke, pointerId: e.pointerId, start: p, end: p }
       if (this.selection.size) this.clearSelection()
+    } else if (tool === 'measure') {
+      if (e.button !== 0) return
+      const m = this.measurement
+      if (m?.kind === 'protractor' && m.waiting) {
+        // Andra benet: ett klick bestämmer det.
+        this.measurement = { ...m, c: p, waiting: false }
+        this.present()
+        this.emitStatus()
+        return
+      }
+      this.measurement = { kind: this.tools.measure, a: p, b: p }
+      this.action = { kind: 'measure', pointerId: e.pointerId }
+      this.present()
+      this.emitStatus()
     } else if (tool === 'eraser') {
       this.action = {
         kind: 'erase',
@@ -566,6 +710,11 @@ export class InkCanvas {
       const barrel = (e.buttons & 2) !== 0 || (e.buttons & 32) !== 0
       if (barrel !== this.barrel) this.barrel = barrel
       this.updateCursor()
+      const m = this.measurement
+      if (m?.kind === 'protractor' && m.waiting) {
+        this.measurement = { ...m, c: this.toDoc(e.clientX, e.clientY) }
+        this.present()
+      }
       return
     }
     if (e.pointerId !== this.action.pointerId) return
@@ -601,6 +750,21 @@ export class InkCanvas {
         const [x, y] = this.toDoc(ev.clientX, ev.clientY)
         return [x, y, this.pressureOf(ev)] as Point
       })
+      this.present()
+      return
+    }
+    if (a.kind === 'measure') {
+      const m = this.measurement
+      if (m) {
+        let b = this.toDoc(e.clientX, e.clientY)
+        // Shift låser till 15°, som formverktyget.
+        if (e.shiftKey) {
+          const pts = shapePoints('line', m.a, b, true)
+          const last = pts[pts.length - 1]
+          b = [last[0], last[1]]
+        }
+        this.measurement = { ...m, b }
+      }
       this.present()
       return
     }
@@ -640,7 +804,13 @@ export class InkCanvas {
     this.action = null
     if (this.el.hasPointerCapture(e.pointerId)) this.el.releasePointerCapture(e.pointerId)
 
-    if (a.kind === 'shape') {
+    if (a.kind === 'measure') {
+      const m = this.measurement
+      if (m && Math.hypot(m.b[0] - m.a[0], m.b[1] - m.a[1]) * this.view.zoom < 4) this.measurement = null
+      else if (m?.kind === 'protractor') this.measurement = { ...m, waiting: true, c: m.b }
+      this.invalidate()
+      this.emitStatus()
+    } else if (a.kind === 'shape') {
       const [dx, dy] = [a.end[0] - a.start[0], a.end[1] - a.start[1]]
       // Ett klick utan att dra blir ingen form.
       if (!cancelled && Math.hypot(dx, dy) * this.view.zoom > 3 && a.stroke.points.length > 1) {
@@ -779,6 +949,7 @@ export class InkCanvas {
       selected: this.selection.size,
       activeTool: this.currentTool(),
       zoom: this.view.zoom,
+      measuring: !!this.measurement,
     })
   }
 

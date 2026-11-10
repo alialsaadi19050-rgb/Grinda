@@ -195,3 +195,23 @@ export const ShapeEllipse = (p: P) => (
     <ellipse cx="12" cy="12" rx="8" ry="6.5" />
   </svg>
 )
+export const Ruler = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="2.5" y="8" width="19" height="8" rx="1.5" />
+    <path d="M6 8v3M9.5 8v4.5M13 8v3M16.5 8v4.5" />
+  </svg>
+)
+export const Protractor = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M3 18a9 9 0 0 1 18 0Z" />
+    <path d="M12 18 17 10" />
+    <path d="M7.5 18a4.5 4.5 0 0 1 9 0" />
+  </svg>
+)
+export const Template = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 3v18M3 12h18" />
+    <path d="m18.5 9.5 2.5 2.5-2.5 2.5M9.5 5.5 12 3l2.5 2.5" />
+    <circle cx="12" cy="12" r="5.5" strokeDasharray="2 2.5" />
+  </svg>
+)

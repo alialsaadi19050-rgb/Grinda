@@ -2,7 +2,8 @@
 // (1 enhet = 1 CSS-pixel vid 100 % zoom), så att det går att zooma och exportera skarpt.
 
 /** 'hand' flyttar runt på skrivytan (dra med musen eller pennan). 'shape' ritar linjer, rektanglar och cirklar. */
-export type Tool = 'pen' | 'highlighter' | 'eraser' | 'lasso' | 'hand' | 'shape'
+export type Tool = 'pen' | 'highlighter' | 'eraser' | 'lasso' | 'hand' | 'shape' | 'measure'
+export type MeasureKind = 'ruler' | 'protractor'
 export type ShapeKind = 'line' | 'rect' | 'ellipse'
 export type EraserMode = 'stroke' | 'partial'
 export type Background = 'grid' | 'lined' | 'blank'
