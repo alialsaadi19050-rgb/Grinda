@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { fireConfetti } from '../game/confetti.ts'
 import { ACTIONS, comboFromEvent, DEFAULT_SHORTCUTS, prettyCombo, S620_ASPECT, updateSettings, useSettings, type ActionId } from './settings.ts'
 import { openThemeEditor } from '../design/ThemeEditor.tsx'
 import type { Background } from '../canvas/types.ts'
@@ -366,6 +367,9 @@ function StudyTab() {
           <input type="checkbox" checked={s.celebrate} onChange={(e) => updateSettings({ celebrate: e.target.checked })} />
           <span>Konfetti och en liten ruta när jag klarar något (nytt märke, ny nivå, dagens mål, klart avsnitt)</span>
         </label>
+        <button className="mk-btn-ghost st-confetti" onClick={() => fireConfetti(1.6)}>
+          🎉 Testa konfettin
+        </button>
       </section>
       <section className="st-section">
         <h3>Repetition</h3>

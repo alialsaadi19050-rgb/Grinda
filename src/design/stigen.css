@@ -1044,3 +1044,8 @@ h3 {
     flex-shrink: 0;
   }
 }
+.st-confetti {
+  justify-self: start;
+  height: 44px !important;
+  margin-top: 4px;
+}

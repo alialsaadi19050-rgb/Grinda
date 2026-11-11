@@ -54,7 +54,8 @@ export function fireConfetti(power = 1) {
   const dpr = Math.min(devicePixelRatio || 1, 2)
   canvas.width = W * dpr
   canvas.height = H * dpr
-  document.body.append(canvas)
+  // Är en dialog öppen (t.ex. Inställningar) ligger den överst; då läggs konfettin i den så att den syns.
+  ;(document.querySelector('dialog[open]') ?? document.body).append(canvas)
   const ctx = canvas.getContext('2d')!
   running = { canvas, pieces }
   let last = performance.now()
