@@ -8,7 +8,8 @@ export function StatsPublisher() {
   const game = useGame()
   const last = useRef('')
   useEffect(() => {
-    if (!inbox.joined || !game) return
+    // Vill du inte synas i topplistan skickas inga siffror alls.
+    if (!inbox.joined || !game || inbox.me?.hidden) return
     const stats: PublicStats = {
       weekXp: game.weekXp,
       xp: game.xp,
@@ -26,6 +27,6 @@ export function StatsPublisher() {
       pushStats(stats).catch(() => (last.current = ''))
     }, 3000)
     return () => clearTimeout(t)
-  }, [inbox.joined, game])
+  }, [inbox.joined, inbox.me?.hidden, game])
   return null
 }

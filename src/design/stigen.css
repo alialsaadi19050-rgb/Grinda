@@ -1049,3 +1049,32 @@ h3 {
   height: 44px !important;
   margin-top: 4px;
 }
+
+/* "Visa mig i topplistan" */
+.so-board-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 14px 0;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--line);
+  cursor: pointer;
+}
+.so-board-toggle input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.so-board-toggle b {
+  display: block;
+  font-weight: 800;
+}
+.so-board-toggle small {
+  display: block;
+  color: var(--text-dim);
+  font-size: 13.5px;
+}

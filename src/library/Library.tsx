@@ -297,7 +297,7 @@ function SideColumn({ exercises, onGoal }: { exercises: Exercise[]; onGoal: () =
     { key: 'srs', icon: <Undo size={20} />, color: 'sky', title: !srs.enabled ? 'Repetition avstängd' : due ? `Repetera ${due} ${due === 1 ? 'uppgift' : 'uppgifter'}` : 'Ingen repetition idag', have: due ? 0 : 1, need: 1, href: '#/ova' },
     { key: 'streak', icon: <Flame size={20} />, color: 'coral', title: game.streakDays ? `${game.streakDays} ${game.streakDays === 1 ? 'dag' : 'dagar'} i rad` : 'Räkna idag och starta en svit', have: game.today > 0 ? 1 : 0, need: 1, href: '#/statistik' },
   ]
-  const sorted = [...(board ?? [])].sort((a, b) => (b.stats.weekXp ?? 0) - (a.stats.weekXp ?? 0)).slice(0, 4)
+  const sorted = [...(board ?? [])].filter((f) => !f.stats.hidden).sort((a, b) => (b.stats.weekXp ?? 0) - (a.stats.weekXp ?? 0)).slice(0, 4)
   const earned = game.badges.filter((b) => b.earned)
   const showBadges = [...earned, ...game.badges.filter((b) => !b.earned)].slice(0, 4)
   return (

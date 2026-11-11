@@ -20,10 +20,14 @@ export const myId = () => currentSession()?.sync.user ?? null
 export interface Me {
   name: string
   blocked: boolean
+  /** Syns inte i topplistan (namnet finns kvar för meddelanden och dueller). */
+  hidden?: boolean
 }
 export const fetchMe = () => rpc<Me | null>('social_me', auth())
 export const join = (name: string) => rpc('social_join', { ...auth(), p_name: name })
 export const leave = () => rpc('social_leave', auth())
+/** Visa dig i topplistan eller inte. Dold: servern sparar och visar inga siffror. */
+export const setHidden = (hidden: boolean) => rpc('social_hide', { ...auth(), p_hidden: hidden })
 
 export interface PublicStats {
   weekXp: number
@@ -35,6 +39,8 @@ export interface PublicStats {
   badges: number
   /** Början på veckan (ms) som weekXp gäller. */
   at: number
+  /** Du har valt att inte synas i topplistan (då skickas inga siffror). */
+  hidden?: boolean
 }
 export const pushStats = (stats: PublicStats) => rpc('social_stats', { ...auth(), p_stats: stats })
 

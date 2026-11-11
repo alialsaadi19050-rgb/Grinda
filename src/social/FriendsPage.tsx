@@ -7,7 +7,7 @@ import { exerciseHref, Nav, useContent } from '../library/Library.tsx'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
 import { subjectOf, useSubject } from '../subject/subject.ts'
 import { MathText } from '../ui/MathText.tsx'
-import { createDuel, fetchBoard, fetchDuels, fetchImage, join, leave, myId, readThread, refreshInbox, resetInbox, search, send, useInbox, type Duel, type Friend, type Message } from './api.ts'
+import { createDuel, fetchBoard, setHidden, fetchDuels, fetchImage, join, leave, myId, readThread, refreshInbox, resetInbox, search, send, useInbox, type Duel, type Friend, type Message } from './api.ts'
 import '../practice/practice.css'
 import './social.css'
 
@@ -72,7 +72,7 @@ export function FriendsPage({ with: chatWith }: { with?: string }) {
                 Du heter <b>{inbox.me?.name}</b> · <ProfileMenu />
               </span>
             </div>
-            {tab === 'board' && <Board board={board} />}
+            {tab === 'board' && <Board board={board} onChanged={() => fetchBoard().then(setBoard, () => {})} />}
             {tab === 'chat' && <Chats board={board} chatWith={chatWith} />}
             {tab === 'duels' && <Duels board={board} />}
           </>
@@ -90,6 +90,7 @@ function JoinForm({ initial = '', onDone }: { initial?: string; onDone?: () => v
   const [name, setName] = useState(initial)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [show, setShow] = useState(true)
   return (
     <form
       className="so-join"
@@ -99,6 +100,7 @@ function JoinForm({ initial = '', onDone }: { initial?: string; onDone?: () => v
         setError(null)
         try {
           await join(name)
+          if (!initial && !show) await setHidden(true)
           resetInbox()
           onDone?.()
         } catch (err) {
@@ -125,6 +127,7 @@ function JoinForm({ initial = '', onDone }: { initial?: string; onDone?: () => v
           {busy ? 'Sparar …' : initial ? 'Byt namn' : 'Gå med'}
         </button>
       </div>
+      {!initial && <BoardToggle on={show} onChange={setShow} />}
       {error && <p className="so-error">{error}</p>}
     </form>
   )
@@ -172,14 +175,44 @@ function ProfileMenu() {
 
 /* ---------- Topplista ---------- */
 
-function Board({ board }: { board: Friend[] | null }) {
+/** Visa dig i topplistan eller inte. Namnet finns kvar för meddelanden och dueller. */
+function BoardToggle({ on, onChange, busy }: { on: boolean; onChange: (on: boolean) => void; busy?: boolean }) {
+  return (
+    <label className="st-switch so-board-toggle">
+      <input type="checkbox" checked={on} disabled={busy} onChange={(e) => onChange(e.target.checked)} />
+      <span>
+        <b>Visa mig i topplistan</b>
+        <small>{on ? 'Dina kompisar ser din XP, nivå och svit.' : 'Du syns inte i topplistan och inga siffror skickas. Kompisar kan fortfarande hitta dig, skriva till dig och utmana dig.'}</small>
+      </span>
+    </label>
+  )
+}
+
+function Board({ board, onChanged }: { board: Friend[] | null; onChanged: () => void }) {
   const [sort, setSort] = useState<'weekXp' | 'xp' | 'streak' | 'solved'>('weekXp')
   const me = myId()
+  const inbox = useInbox()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   if (!board) return <p className="pr-empty">Hämtar topplistan …</p>
+  // De som valt att inte synas i topplistan visas inte här (men går att skriva till).
+  const shown = board.filter((f) => !f.stats.hidden)
+  const toggle = async (on: boolean) => {
+    setBusy(true)
+    setError(null)
+    try {
+      await setHidden(!on)
+      resetInbox()
+      onChanged()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+    setBusy(false)
+  }
   const week = 7 * 86_400_000
   // Veckans XP räknas bara om den skickats den senaste veckan.
   const value = (f: Friend) => (sort === 'weekXp' && Date.now() - (f.stats.at ?? 0) > week ? 0 : (f.stats[sort] ?? 0))
-  const rows = [...board].sort((a, b) => value(b) - value(a) || a.name.localeCompare(b.name))
+  const rows = [...shown].sort((a, b) => value(b) - value(a) || a.name.localeCompare(b.name))
   const label = { weekXp: 'XP senaste 7 dagarna', xp: 'XP totalt', streak: 'Dagar i rad', solved: 'Lösta uppgifter' }[sort]
   return (
     <section className="so-section">
@@ -197,6 +230,8 @@ function Board({ board }: { board: Friend[] | null }) {
           </button>
         ))}
       </div>
+      <BoardToggle on={!inbox.me?.hidden} onChange={toggle} busy={busy} />
+      {error && <p className="so-error">{error}</p>}
       <ol className="so-board">
         {rows.map((f, i) => (
           <li key={f.user_id} className={f.user_id === me ? 'me' : ''}>
