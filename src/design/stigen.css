@@ -926,3 +926,121 @@ h3 {
     inset 0 0 0 2px var(--line),
     0 30px 70px -20px rgba(0, 0, 0, 0.5);
 }
+
+/* ---------- Kapitelsidans överdel: ett färgat kort som på startsidan ---------- */
+:root .ch-hero {
+  margin: 84px clamp(14px, 3vw, 32px) 0 12px;
+  max-width: 1240px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 26px;
+  overflow: hidden;
+  background: linear-gradient(120deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--sky)));
+  box-shadow: 0 8px 0 var(--accent-deep);
+  color: var(--accent-ink);
+}
+:root .ch-hero .mk-hero-art,
+:root .ch-hero .mk-hero-shade {
+  display: none;
+}
+:root .ch-hero-inner {
+  position: relative;
+  padding: 30px 32px 30px;
+  min-height: 0;
+}
+:root .ch-hero .ch-title {
+  color: inherit;
+  font-size: clamp(30px, 4.2vw, 50px);
+  line-height: 1.05;
+}
+:root .ch-hero .mk-kicker,
+:root .ch-hero .mk-hero-lead {
+  color: inherit;
+  opacity: 0.9;
+}
+:root .ch-hero .mk-btn-primary {
+  background: #fff !important;
+  color: var(--accent-deep) !important;
+  box-shadow: 0 var(--press) 0 rgba(0, 0, 0, 0.2) !important;
+}
+:root .ch-hero .ch-chapters a {
+  color: inherit;
+}
+:root .ch-ring .track {
+  stroke: rgba(255, 255, 255, 0.25);
+}
+:root .ch-ring .fill {
+  stroke: var(--sun);
+}
+:root .ch-ring span {
+  color: inherit;
+}
+@media (max-width: 1099px) {
+  :root .ch-hero {
+    margin-left: clamp(14px, 3vw, 32px);
+  }
+}
+@media (max-width: 700px) {
+  :root .ch-hero {
+    margin-top: 72px;
+  }
+  :root .ch-hero-inner {
+    padding: 22px 20px;
+  }
+}
+:root .ch-hero {
+  margin-bottom: 30px;
+}
+:root .ch-body {
+  max-width: 1240px;
+  padding: 0 clamp(14px, 3vw, 32px) 80px 12px;
+}
+@media (max-width: 1099px) {
+  :root .ch-body {
+    padding-left: clamp(14px, 3vw, 32px);
+  }
+}
+@media (max-width: 700px) {
+  :root .ch-ring {
+    position: absolute;
+    top: 16px;
+    right: 14px;
+    width: 72px;
+    height: 72px;
+  }
+  :root .ch-ring strong {
+    font-size: 20px;
+  }
+  :root .ch-hero .ch-title,
+  :root .ch-hero .mk-kicker {
+    padding-right: 76px;
+  }
+}
+/* På mobilen är avsnitten en rad att svepa i, så att uppgifterna syns direkt. */
+@media (max-width: 700px) {
+  :root .ch-sections {
+    display: flex;
+    gap: 10px;
+    margin: 0 calc(-1 * clamp(14px, 3vw, 32px)) 16px;
+    padding: 4px clamp(14px, 3vw, 32px) 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  :root .ch-section {
+    flex: 0 0 200px;
+    scroll-snap-align: start;
+  }
+}
+@media (max-width: 700px) {
+  :root .ch-chips {
+    flex-wrap: nowrap;
+    margin: 0 calc(-1 * clamp(14px, 3vw, 32px));
+    padding: 2px clamp(14px, 3vw, 32px) 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  :root .ch-chips > * {
+    flex-shrink: 0;
+  }
+}
