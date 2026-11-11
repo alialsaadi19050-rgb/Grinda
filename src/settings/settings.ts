@@ -103,7 +103,7 @@ export interface Settings {
   calculatorMode?: 'simple' | 'ti84'
   /** TI-84-emulatorns storlek (1 = 780 px hög). */
   tiScale?: number
-  /** Med ritplatta: skrivyta bredvid uppgiften. Utan: allt i en centrerad kolumn och uträkningar med tangentbordet. */
+  /** Med ritplatta: skrivyta bredvid uppgiften. Utan (standard): allt i en centrerad kolumn och uträkningar med tangentbordet. */
   tablet: boolean
   /** Dagligt mål: antal rätta deluppgifter per dag. 0 = inget mål. */
   dailyGoal: number
@@ -141,7 +141,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pressureHintDismissed: false,
   inputMode: 'math',
   lowLatency: true,
-  tablet: true,
+  tablet: false,
   dailyGoal: 10,
   srs: { enabled: true, intervals: [1, 3, 7], maxPerDay: 10 },
   celebrate: true,
