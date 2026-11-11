@@ -9,6 +9,7 @@ import { SUBJECTS, setSubject, useSubject } from '../subject/subject.ts'
 import { useInbox } from '../social/api.ts'
 import { useCanInvite } from '../vault/InviteTab.tsx'
 import { useGame } from '../game/useGame.ts'
+import { QuickJump } from './QuickJump.tsx'
 import './nav.css'
 
 export type NavPage = 'home' | 'chapter' | 'learn' | 'practice' | 'formulas' | 'friends' | 'stats' | 'admin'
@@ -85,6 +86,7 @@ export function Nav({ streak, onSettings, active, firstChapter }: { streak: numb
               <Gem size={17} /> {game.xp.toLocaleString('sv-SE')}
             </a>
           )}
+          <QuickJump />
           <button className="nv-icon" onClick={toggleMode} aria-label={mode === 'dark' ? 'Byt till ljust läge' : 'Byt till mörkt läge'} title={mode === 'dark' ? 'Ljust läge' : 'Mörkt läge'}>
             {mode === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
           </button>

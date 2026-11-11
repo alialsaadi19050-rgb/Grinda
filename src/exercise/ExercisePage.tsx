@@ -15,6 +15,7 @@ import { InkSurface, type InkSurfaceHandle } from '../canvas/InkSurface.tsx'
 import { actionForEvent, S620_ASPECT, updateSettings, useSettings } from '../settings/settings.ts'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
 import { ThemeEditor } from '../design/ThemeEditor.tsx'
+import { QuickJump } from '../library/QuickJump.tsx'
 import { toggleBookmark, useBookmarks } from '../bookmarks/bookmarks.ts'
 import { lessonHref, useLessons } from '../lessons/data.ts'
 import { attemptsFor, currentRound, startRedo } from '../storage/db.ts'
@@ -265,6 +266,7 @@ export function ExercisePage({ id }: { id: string }) {
               </button>
             ))}
           </div>
+          <QuickJump />
           <button className={`ex-formulas ${formulasOpen ? 'on' : ''}`} onClick={() => setFormulasOpen((o) => !o)} aria-expanded={formulasOpen} title={`Formelblad för uppgiften (${settings.shortcuts.formulas})`}>
             <Sigma size={17} />
             <span>Formler</span>
