@@ -52,12 +52,21 @@ export function LessonRules({ lessons, index, subject, query }: { lessons: Lesso
   )
 }
 
+// Panelen kommer ihåg sökningen och hur långt ner du skrollat tills du öppnar den igen.
+let lastQuery = ''
+let lastScroll = 0
+
 export function FormulaDrawer({ chapter, onClose }: { topic?: string; chapter: number; onClose: () => void }) {
   const lessons = useLessons()
   const book = useFormulaBook()
   const [index, setIndex] = useState<ContentIndex | null>(null)
-  const [query, setQuery] = useState('')
+  const [query, setQueryState] = useState(lastQuery)
+  const setQuery = (q: string) => {
+    lastQuery = q
+    setQueryState(q)
+  }
   const panel = useRef<HTMLElement>(null)
+  const body = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadContentOnce().then((c) => setIndex(c.index), () => {})
@@ -74,6 +83,11 @@ export function FormulaDrawer({ chapter, onClose }: { topic?: string; chapter: n
     return c ? subjectOf(c) : chapter === 102 ? 'fysik' : 'matte'
   }, [index, chapter])
   const showBook = subject === 'fysik' && !!book
+  const ready = book !== undefined && !!lessons && !!index
+  // Tillbaka till samma ställe när innehållet laddats.
+  useEffect(() => {
+    if (ready && body.current) body.current.scrollTop = lastScroll
+  }, [ready])
 
   return (
     <div className="fd-backdrop" onClick={onClose}>
@@ -90,9 +104,14 @@ export function FormulaDrawer({ chapter, onClose }: { topic?: string; chapter: n
         <label className="fb-search fd-search">
           <Search size={16} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Sök formel …" aria-label="Sök i formelbladet" />
+          {query && (
+            <button className="fd-clear" onClick={() => setQuery('')} aria-label="Rensa sökningen">
+              ×
+            </button>
+          )}
         </label>
-        <div className="fd-body">
-          {book === undefined || !lessons || !index ? (
+        <div className="fd-body" ref={body} onScroll={(e) => (lastScroll = e.currentTarget.scrollTop)}>
+          {!ready || !lessons || !index ? (
             <p className="fd-empty">Hämtar …</p>
           ) : showBook ? (
             <FormulaBookView book={book} query={query} compact />

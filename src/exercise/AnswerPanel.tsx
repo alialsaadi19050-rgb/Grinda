@@ -96,6 +96,11 @@ export function AnswerPanel({ ex, panelRef, next, onRedo, redoLabel, footer, onA
           </button>
         )}
       </div>
+      {ex.parts.length > 1 && (
+        <span className="ex-answer-bar" role="progressbar" aria-label="Delar klara" aria-valuemin={0} aria-valuemax={ex.parts.length} aria-valuenow={solved.size}>
+          <i style={{ width: `${(100 * solved.size) / ex.parts.length}%` }} />
+        </span>
+      )}
       {confirmRedo && onRedo && (
         <div className="ex-redo-confirm">
           <p>

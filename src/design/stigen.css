@@ -351,3 +351,123 @@ h3 {
     padding-bottom: 30px;
   }
 }
+
+/* ---------- Uppgiftskorten (raderna på startsidan och kapitelsidan) ----------
+ * Läsbara kort med kant: siffran, området och hur många delar som syns alltid. */
+:root .mk-tile-card {
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 2px var(--line),
+    0 4px 0 var(--line);
+}
+:root .mk-tile:hover .mk-tile-card,
+:root .mk-tile:focus-visible .mk-tile-card {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 0 0 2px var(--accent),
+    0 6px 0 var(--accent-deep);
+}
+:root .mk-tile-thumb {
+  padding: 42px 16px 16px;
+  color: var(--text-dim);
+  font-size: 11px;
+  -webkit-mask-image: linear-gradient(180deg, #000 15%, transparent 50%);
+  mask-image: linear-gradient(180deg, #000 15%, transparent 50%);
+}
+:root .mk-tile-shade {
+  display: none;
+}
+:root .mk-tile-num {
+  bottom: 44px;
+  font-size: 32px;
+}
+:root .mk-tile:hover .mk-tile-num {
+  transform: none;
+}
+:root .mk-tile-more {
+  transform: none;
+  opacity: 1;
+  padding: 8px 14px 16px;
+  background: none;
+  color: var(--text-dim);
+  font-weight: 800;
+}
+:root .mk-tile-more > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:root .mk-tile-play {
+  flex-shrink: 0;
+}
+:root .st-correct .mk-tile-card {
+  background: color-mix(in srgb, var(--mint) 10%, var(--surface));
+  box-shadow:
+    inset 0 0 0 2px var(--mint),
+    0 4px 0 var(--mint-deep);
+}
+:root .st-correct .mk-tile-num {
+  color: var(--mint-deep);
+}
+:root[data-theme='dark'] .st-correct .mk-tile-num {
+  color: var(--mint);
+}
+:root .st-missed .mk-tile-card {
+  box-shadow:
+    inset 0 0 0 2px var(--coral),
+    0 4px 0 var(--coral-deep);
+}
+:root .mk-badge.ok {
+  background: var(--mint);
+  color: #fff;
+  box-shadow: none;
+}
+:root .mk-badge.miss {
+  background: var(--coral);
+  color: #fff;
+  box-shadow: none;
+}
+:root .mk-tile-progress {
+  left: 14px;
+  right: 14px;
+  bottom: 6px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+:root .mk-tile-progress span {
+  border-radius: 99px;
+  background: var(--sun);
+  box-shadow: none;
+}
+
+/* Framstegsraden i svarspanelen */
+.ex-answer-bar {
+  display: block;
+  flex: none;
+  height: 14px;
+  margin: 2px 4px 0;
+  border-radius: 99px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--line);
+  overflow: hidden;
+}
+.ex-answer-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--mint);
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.08),
+    inset 0 3px 0 rgba(255, 255, 255, 0.35);
+  transition: width 0.5s var(--ease-out);
+}
+
+/* Kontrollera-knappen tar inte mer plats än den behöver, så att svarsfältet blir brett. */
+:root .ex-field .ex-check {
+  flex: none;
+  padding: 0 14px;
+  font-size: 13px;
+}
