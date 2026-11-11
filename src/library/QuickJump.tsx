@@ -107,7 +107,7 @@ function JumpDialog({ onClose }: { onClose: () => void }) {
               hits.map((h, i) => (
                 <li key={h.key} role="option" aria-selected={i === sel}>
                   <a href={h.href} className={i === sel ? 'on' : ''} onMouseEnter={() => setSel(i)} onClick={onClose}>
-                    <span className={`qj-kind ${h.kind === 'Uppgift' ? 'ex' : 'ls'}`}>{h.kind}</span>
+                    <span className={`qj-kind ${h.kind === 'Uppgift' ? 'qj-ex' : 'qj-ls'}`}>{h.kind}</span>
                     <b>{h.title}</b>
                     <small>{h.sub}</small>
                   </a>
