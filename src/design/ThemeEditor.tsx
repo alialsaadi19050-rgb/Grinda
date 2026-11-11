@@ -119,7 +119,7 @@ export function ThemeEditor() {
           <label className="te-range">
             <span>{resolveMode(t.mode) === 'dark' ? 'Mörkhet' : 'Mjukhet'}</span>
             <input type="range" min={0} max={100} value={Math.round(t.softness * 100)} onChange={(e) => setTheme({ softness: Number(e.target.value) / 100 })} />
-            <small>{resolveMode(t.mode) === 'dark' ? 'Mörk grafit ← → ljusare grafit' : 'Ljust vitt ← → mjukt papper'}</small>
+            <small>{resolveMode(t.mode) === 'dark' ? 'Djup natt ← → ljusare kväll' : 'Ljust ← → mjukare'}</small>
           </label>
 
           <button className="te-reset" onClick={() => setTheme({ ...DEFAULT_THEME, mode: t.mode })}>
