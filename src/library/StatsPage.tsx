@@ -6,6 +6,7 @@ import { Flame } from '../design/icons.tsx'
 import { Nav, Ring, sectionLabel, useContent } from './Library.tsx'
 import { BadgeGrid, WeekCard } from '../game/GameStrip.tsx'
 import { useGame } from '../game/useGame.ts'
+import { ActivityMap, WeakTopics } from './StatsExtras.tsx'
 
 const DAYS = ['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör']
 
@@ -89,6 +90,19 @@ export function StatsPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        {game && (
+          <section className="stp-section">
+            <h2>Senaste 16 veckorna</h2>
+            <ActivityMap xpByDay={game.xpByDay} />
+          </section>
+        )}
+
+        <section className="stp-section">
+          <h2>Öva mer på</h2>
+          <p className="mk-row-note">Områdena där du svarat fel oftast, räknat på de uppgifter du försökt.</p>
+          <WeakTopics exercises={content.exercises} progress={progress} />
         </section>
 
         <section className="stp-section">

@@ -11,6 +11,9 @@ import { lessonHref, useLessons } from '../lessons/data.ts'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
 import { setSubject } from '../subject/subject.ts'
 import { MathText } from '../ui/MathText.tsx'
+import { InkSurface, type InkSurfaceHandle } from '../canvas/InkSurface.tsx'
+import { NotesPad } from '../exercise/NotesPad.tsx'
+import { useSettings } from '../settings/settings.ts'
 import { GENERATORS, generatorHref, rng } from './generators.ts'
 import '../library/library.css'
 import '../exercise/exercise.css'
@@ -28,11 +31,15 @@ export function GeneratorPage({ id }: { id: string }) {
   const lessons = useLessons()
   const panel = useRef<HTMLElement>(null)
   const more = useRef<HTMLAnchorElement>(null)
+  const ink = useRef<InkSurfaceHandle>(null)
+  const settings = useSettings()
 
   useEffect(() => {
     const on = () => {
       setSeed(seedFromHash())
       setCount((c) => c + 1)
+      // Ny uppgift: börja på ett tomt kladdpapper.
+      ink.current?.clear()
       window.scrollTo(0, 0)
     }
     window.addEventListener('hashchange', on)
@@ -111,6 +118,14 @@ export function GeneratorPage({ id }: { id: string }) {
             </a>
           }
         />
+        {/* Kladdpapper att räkna på: samma ritplatta som i bokens uppgifter, eller text om du räknar utan ritplatta. */}
+        {settings.tablet ? (
+          <section className="gen-scratch" aria-label="Kladdpapper">
+            <InkSurface ref={ink} exerciseId={`${GEN_PREFIX}kladd:${gen.id}`} title={`Kladdpapper ${gen.topic}`} paper={settings.paper} className="gen-ink" />
+          </section>
+        ) : (
+          <NotesPad exerciseId={`${GEN_PREFIX}kladd:${gen.id}`} />
+        )}
       </div>
       <Calculator open={calcOpen} onClose={() => setCalcOpen(false)} />
       {formulasOpen && <FormulaDrawer topic={gen.topic} chapter={gen.subject === 'fysik' ? 102 : 1} onClose={() => setFormulasOpen(false)} />}
