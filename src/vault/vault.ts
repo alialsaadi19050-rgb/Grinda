@@ -22,7 +22,8 @@ const sync = () => import('../sync/sync.ts')
 
 export type VaultStatus = 'checking' | 'locked' | 'open'
 
-const PLAIN = import.meta.env.DEV
+// Demoversionen (vite build --mode demo) har egna, påhittade uppgifter i klartext och ingen inloggning.
+const PLAIN = import.meta.env.DEV || import.meta.env.MODE === 'demo'
 let status: VaultStatus = PLAIN ? 'open' : 'checking'
 let files: Record<string, string> | null = null
 /** Den inloggade sessionen: boknyckeln behövs för att skapa inbjudningskoder. */
