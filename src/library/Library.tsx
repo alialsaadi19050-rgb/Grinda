@@ -235,6 +235,11 @@ function ChapterPath({ chapter, content, progress, lessons, lessonDone, featured
           const inner = (
             <>
               {n.state === 'current' && <span className="sg-bubble">Starta</span>}
+              {n.state === 'done' && n.kind === 'lesson' && (
+                <span className="sg-done" aria-hidden="true">
+                  <Check size={13} strokeWidth={3.5} />
+                </span>
+              )}
               <span className="sg-face">
                 <NodeIcon node={n} />
               </span>

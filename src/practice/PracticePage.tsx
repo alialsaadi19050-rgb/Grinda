@@ -47,6 +47,20 @@ export function PracticePage() {
     return map
   }, [attempts])
 
+  // Rätta svar per sorts uppgift med nya siffror (id:t är gen:<övning>:<frö>), och andel rätt.
+  const genStats = useMemo(() => {
+    const map = new Map<string, { right: number; tries: number }>()
+    for (const a of attempts ?? []) {
+      if (!a.exerciseId.startsWith('gen:') || a.exerciseId.startsWith('gen:kladd:')) continue
+      const id = a.exerciseId.split(':')[1]
+      const st = map.get(id) ?? { right: 0, tries: 0 }
+      st.tries++
+      if (a.status === 'correct') st.right++
+      map.set(id, st)
+    }
+    return map
+  }, [attempts])
+
   if (!content || !progress || !review) return <div className="mk-loading">Laddar …</div>
 
   const byId = new Map(content.exercises.map((e) => [e.id, e]))
@@ -239,6 +253,11 @@ export function PracticePage() {
               <a key={g.id} className="pr-gen" href={generatorHref(g.id)}>
                 <span aria-hidden="true">🎲</span>
                 <strong>{g.topic}</strong>
+                {genStats.get(g.id) && (
+                  <small className="pr-gen-count" title={`${genStats.get(g.id)!.right} rätt av ${genStats.get(g.id)!.tries} försök`}>
+                    {genStats.get(g.id)!.right} rätt
+                  </small>
+                )}
               </a>
             ))}
           </div>
