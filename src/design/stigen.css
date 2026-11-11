@@ -1,0 +1,353 @@
+/*
+ * Stigen – appens utseende. Läggs sist så att den gäller över de äldre stilarna:
+ * runda, lekfulla typsnitt, knappar med en kant under sig som går att "trycka ner",
+ * och kort med tydliga kanter i stället för glas och brus.
+ */
+:root {
+  --font-ui: 'Nunito Variable', 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'Nunito Variable', system-ui, sans-serif;
+  --font-book: 'Nunito Variable', 'Nunito', system-ui, sans-serif;
+  --radius: 18px;
+  --card-radius: 22px;
+  --press: 4px;
+}
+/* Läsbarhetsläget (Inställningar) går före. */
+:root[data-font='easy'] {
+  --font-ui: 'Atkinson Hyperlegible', 'Nunito Variable', system-ui, sans-serif;
+  --font-book: 'Atkinson Hyperlegible', 'Nunito Variable', system-ui, sans-serif;
+}
+
+body {
+  font-weight: 600;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Inget brus över sidan. */
+.grain::after {
+  display: none !important;
+}
+:root[data-theme='dark'] .mk,
+:root[data-theme='dark'] .ex {
+  background:
+    radial-gradient(1.3px 1.3px at 12% 18%, rgba(255, 255, 255, 0.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 9%, rgba(255, 255, 255, 0.35) 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 88% 42%, rgba(255, 255, 255, 0.3) 50%, transparent 51%),
+    radial-gradient(1px 1px at 33% 64%, rgba(255, 255, 255, 0.25) 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 58% 88%, rgba(255, 255, 255, 0.3) 50%, transparent 51%),
+    var(--bg);
+  background-attachment: fixed;
+}
+:root[data-theme='light'] .mk,
+:root[data-theme='light'] .ex {
+  background: var(--bg);
+}
+
+/* ---------- Knappar som går att trycka ner ---------- */
+.mk-btn-primary,
+.ex-check,
+.ls-check,
+.ls-btn,
+.lg-btn,
+.st-primary,
+.so-check,
+.max-btn,
+.li-cta,
+.mk-redo-start {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: var(--accent) !important;
+  color: var(--accent-ink) !important;
+  box-shadow: 0 var(--press) 0 var(--accent-deep) !important;
+  font-family: var(--font-ui) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s,
+    filter 0.15s !important;
+}
+.mk-btn-primary:hover,
+.ex-check:hover,
+.ls-check:hover,
+.ls-btn:hover,
+.lg-btn:hover,
+.st-primary:hover,
+.so-check:hover,
+.max-btn:hover,
+.li-cta:hover,
+.mk-redo-start:hover {
+  transform: none !important;
+  filter: brightness(1.06);
+}
+.mk-btn-primary:active,
+.ex-check:active,
+.ls-check:active,
+.ls-btn:active,
+.lg-btn:active,
+.st-primary:active,
+.so-check:active,
+.max-btn:active,
+.li-cta:active,
+.mk-redo-start:active {
+  transform: translateY(var(--press)) !important;
+  box-shadow: 0 0 0 var(--accent-deep) !important;
+}
+:is(.mk-btn-primary, .ex-check, .ls-check, .ls-btn, .lg-btn, .st-primary, .so-check, .max-btn, .li-cta):disabled {
+  filter: grayscale(0.7) opacity(0.55);
+  transform: none !important;
+}
+.mk-btn-primary,
+.mk-btn-ghost {
+  height: 50px;
+  padding: 0 22px;
+  font-size: 15px;
+}
+.mk-btn-ghost {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  box-shadow:
+    inset 0 0 0 2px var(--line),
+    0 var(--press) 0 var(--line) !important;
+  backdrop-filter: none !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: transform 0.08s, box-shadow 0.08s !important;
+}
+.mk-btn-ghost:active {
+  transform: translateY(var(--press));
+  box-shadow: inset 0 0 0 2px var(--line) !important;
+}
+
+/* Gröna knappar för "rätt" och lyckade lägen. */
+.st-primary.ok,
+.ex-check.ok {
+  background: var(--mint) !important;
+  box-shadow: 0 var(--press) 0 var(--mint-deep) !important;
+}
+
+/* ---------- Nivåetiketter ---------- */
+.mk-lvl {
+  border-radius: 8px;
+  font: 800 11px/1 var(--font-ui);
+  backdrop-filter: none;
+}
+.mk-lvl-a {
+  background: color-mix(in srgb, var(--mint) 22%, transparent);
+  color: var(--mint-deep);
+}
+.mk-lvl-b {
+  background: color-mix(in srgb, var(--sun) 30%, transparent);
+  color: var(--sun-deep);
+}
+.mk-lvl-c {
+  background: var(--coral);
+  color: #fff;
+}
+:root[data-theme='dark'] .mk-lvl-a {
+  color: var(--mint);
+}
+:root[data-theme='dark'] .mk-lvl-b {
+  color: var(--sun);
+}
+
+/* ---------- Dialoger och paneler ---------- */
+.st-dialog,
+.so-dialog,
+.calc,
+.fd,
+.te-panel {
+  border-radius: 26px;
+}
+
+/* ---------- Uppgiftssidan ----------
+ * Sidans egen stilmall laddas först när du öppnar en uppgift, så reglerna här är lite
+ * mer specifika (:root …) för att gälla ändå. */
+:root .ex-home {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--accent);
+  box-shadow: 0 3px 0 var(--accent-deep);
+  color: var(--accent-ink);
+  font-size: 0;
+  transform: rotate(-8deg);
+}
+:root .ex-home::before {
+  content: 'g';
+  font: 800 20px/1 var(--font-display);
+}
+:root .ex-home span {
+  display: none;
+}
+:root .ex-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+:root .ex-answer-head h2 {
+  font-weight: 800;
+}
+:root .ex-field {
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+:root .ex-field-label b {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: var(--sun);
+  color: #3a2800;
+  font-weight: 800;
+}
+:root .ex-input {
+  min-height: 52px;
+  border-radius: 16px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+:root .ex-input:focus-within {
+  box-shadow: inset 0 0 0 2.5px var(--accent);
+}
+:root .ex-input input,
+:root .ex-text {
+  font-weight: 800;
+}
+:root .ex-check {
+  min-height: 48px;
+}
+:root .ex-check.ghost {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  box-shadow:
+    inset 0 0 0 2px var(--line),
+    0 var(--press) 0 var(--line) !important;
+}
+/* Rätt: grönt. Fel: korall. */
+:root .fb-correct {
+  background: color-mix(in srgb, var(--mint) 14%, var(--surface));
+  box-shadow: inset 0 0 0 2px var(--mint);
+}
+:root .fb-correct .ex-input,
+:root .ex-field.solved .ex-input {
+  box-shadow: inset 0 0 0 2.5px var(--mint);
+}
+:root .fb-correct .ex-msg {
+  color: var(--mint-deep);
+  font-weight: 800;
+}
+:root .fb-wrong {
+  background: color-mix(in srgb, var(--coral) 12%, var(--surface));
+  box-shadow: inset 0 0 0 2px var(--coral);
+}
+:root .fb-wrong .ex-input {
+  box-shadow: inset 0 0 0 2.5px var(--coral);
+}
+:root .fb-wrong .ex-msg {
+  color: var(--coral-deep);
+  font-weight: 800;
+}
+:root[data-theme='dark'] .fb-correct .ex-msg {
+  color: var(--mint);
+}
+:root[data-theme='dark'] .fb-wrong .ex-msg {
+  color: var(--coral);
+}
+:root .ex-next.ready {
+  background: var(--mint) !important;
+  box-shadow: 0 var(--press) 0 var(--mint-deep) !important;
+  color: #04291e !important;
+}
+:root .ex-problem,
+:root .ex-plain-problem {
+  border-radius: 22px;
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+:root .ex-lesson {
+  border-radius: 12px;
+  font-weight: 800;
+}
+:root .ex-formulas {
+  border-radius: 12px;
+  font-weight: 800;
+}
+:root .ex-seg {
+  border-radius: 14px;
+}
+:root .ex-seg button {
+  border-radius: 10px;
+  font-weight: 800;
+}
+:root .ex-bookmark {
+  font-weight: 800;
+}
+
+/* ---------- Uppgiftssidan på mobilen ----------
+ * Med ritplatta på en liten skärm får sidan skrolla, så att skrivytan blir stor nog att
+ * räkna på. Uppgiften, skrivytan och svaren ligger under varandra. */
+:root .ex-short {
+  display: none;
+}
+@media (max-width: 640px) {
+  :root .ex-long {
+    display: none;
+  }
+  :root .ex-short {
+    display: inline;
+  }
+  :root .ex-top-right {
+    gap: 2px;
+    flex-wrap: nowrap;
+  }
+  :root .ex-icon {
+    width: 34px;
+    height: 34px;
+  }
+  :root .ex-formulas {
+    height: 34px;
+  }
+  :root .ex-bookmark {
+    padding: 5px 8px;
+    font-size: 0;
+  }
+  :root .ex-bookmark svg {
+    width: 17px;
+    height: 17px;
+  }
+  :root .ex:not(.plain) {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  :root .ex:not(.plain) .ex-body {
+    grid-template-rows: auto auto;
+  }
+  :root .ex:not(.plain) .ex-work {
+    height: 80vh;
+    height: 80svh;
+  }
+  :root .ex:not(.plain) .ex-problem {
+    max-height: 26vh;
+  }
+  :root .ex:not(.plain) .ex-problem-body {
+    font-size: 16px;
+    padding: 14px 16px;
+  }
+  :root .ex:not(.plain) .ex-answer {
+    max-height: none;
+    overflow: visible;
+    padding-bottom: 30px;
+  }
+}

@@ -277,3 +277,23 @@ export const Swap = (p: P) => (
     <path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5" />
   </svg>
 )
+export const Gem = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M6 3h12l4 6-10 12L2 9Z" fill="currentColor" stroke="none" />
+  </svg>
+)
+export const Star = (p: P) => (
+  <svg {...base(p)}>
+    <path d="m12 2.5 2.9 6.1 6.7.8-4.9 4.6 1.3 6.6L12 17.3l-6 3.3 1.3-6.6-4.9-4.6 6.7-.8Z" fill="currentColor" stroke="none" />
+  </svg>
+)
+export const Trophy = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0ZM17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3" />
+  </svg>
+)
+export const Bolt = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M13 2 4 14h7l-1 8 9-12h-7Z" fill="currentColor" stroke="none" />
+  </svg>
+)

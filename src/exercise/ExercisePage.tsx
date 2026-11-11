@@ -260,7 +260,8 @@ export function ExercisePage({ id }: { id: string }) {
           <div className="ex-seg ex-mode-toggle" role="radiogroup" aria-label="Läge">
             {([true, false] as const).map((t) => (
               <button key={String(t)} role="radio" aria-checked={settings.tablet === t} className={settings.tablet === t ? 'on' : ''} onClick={() => updateSettings({ tablet: t })}>
-                {t ? 'Med ritplatta' : 'Utan ritplatta'}
+                <span className="ex-long">{t ? 'Med ritplatta' : 'Utan ritplatta'}</span>
+                <span className="ex-short">{t ? 'Rita' : 'Skriv'}</span>
               </button>
             ))}
           </div>

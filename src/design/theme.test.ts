@@ -26,9 +26,11 @@ describe('tema', () => {
     expect(lum(t['--surface'])).toBeGreaterThan(lum(t['--bg']))
   })
 
-  it('mörkt läge är mjuk grafit, inte svart', () => {
+  it('mörkt läge är en färgad natthimmel, inte svart', () => {
     const t = buildTheme({ mode: 'dark', softness: 0.5, ...PRESETS[0].settings })
-    expect(contrast(hexToRgb(t['--bg']), [0, 0, 0])).toBeGreaterThan(1.25)
+    const [r, , b] = hexToRgb(t['--bg'])
+    expect(contrast(hexToRgb(t['--bg']), [0, 0, 0])).toBeGreaterThan(1.08)
+    expect(b).toBeGreaterThan(r)
   })
 
   for (const mode of modes) {

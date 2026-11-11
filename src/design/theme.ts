@@ -19,6 +19,7 @@ export interface ThemeSettings {
 }
 
 export const PRESETS: { id: string; name: string; settings: Omit<ThemeSettings, 'mode' | 'softness'> }[] = [
+  { id: 'stigen', name: 'Stigen', settings: { accent: '#6c47ff', bgHue: 288, bgTint: 0.75 } },
   { id: 'glod', name: 'Glöd', settings: { accent: '#ff6a2b', bgHue: 45, bgTint: 0.35 } },
   { id: 'neon', name: 'Neon', settings: { accent: '#ff2e88', bgHue: 295, bgTint: 0.45 } },
   { id: 'syra', name: 'Syra', settings: { accent: '#b6ff3b', bgHue: 150, bgTint: 0.35 } },
@@ -126,13 +127,13 @@ export function buildTheme(t: ThemeSettings): Record<string, string> {
   // De två lägena är var sitt eget tema, inte varandras spegelbild.
   // Ljust: varmt papper som bakgrund, vita kort med mjuka skuggor.
   // Mörkt: mjuk grafit (inte svart), kort som är lite ljusare än bakgrunden.
-  const baseL = dark ? 0.215 + t.softness * 0.05 : 0.975 - t.softness * 0.03
-  const bg = oklch(baseL, dark ? tint * 0.9 : tint * 1.4, H)
-  const surface = dark ? oklch(baseL + 0.045, tint * 0.8, H) : oklch(Math.min(1, baseL + 0.03), tint * 0.25, H)
-  const surface2 = dark ? oklch(baseL + 0.085, tint * 0.8, H) : oklch(baseL - 0.028, tint * 1.6, H)
-  const raised = dark ? oklch(baseL + 0.06, tint * 0.8, H) : oklch(1, 0, H)
-  const sunken = dark ? oklch(baseL - 0.03, tint, H) : oklch(baseL - 0.045, tint * 1.6, H)
-  const line = dark ? oklch(baseL + 0.11, tint, H) : oklch(baseL - 0.09, tint * 1.6, H)
+  const baseL = dark ? 0.17 + t.softness * 0.05 : 0.972 - t.softness * 0.03
+  const bg = oklch(baseL, dark ? tint * 2.6 : tint * 1.4, H)
+  const surface = dark ? oklch(baseL + 0.055, tint * 2.6, H) : oklch(Math.min(1, baseL + 0.03), tint * 0.25, H)
+  const surface2 = dark ? oklch(baseL + 0.095, tint * 2.6, H) : oklch(baseL - 0.028, tint * 1.6, H)
+  const raised = dark ? oklch(baseL + 0.07, tint * 2.6, H) : oklch(1, 0, H)
+  const sunken = dark ? oklch(baseL - 0.03, tint * 2.4, H) : oklch(baseL - 0.045, tint * 1.6, H)
+  const line = dark ? oklch(baseL + 0.12, tint * 2.6, H) : oklch(baseL - 0.07, tint * 2.4, H)
   // Kontrasten mäts mot den svåraste ytan: kortet i mörkt läge (ljusare), bakgrunden i ljust (mörkare).
   const hardest = dark ? surface : bg
   const text = ensureContrast(dark ? [0.95, 0.01, H] : [0.26, Math.min(0.025, tint * 1.4), H], hardest, 8, dark ? 1 : -1)
@@ -150,7 +151,24 @@ export function buildTheme(t: ThemeSettings): Record<string, string> {
   const heroTop = dark ? text : oklch(Math.min(0.5, aL), Math.min(0.2, aC), aH)
   const shadowRgb = dark ? '0, 0, 0' : rgbList(oklch(0.3, 0.03, H))
 
+  // Stigens knappar har en mörkare kant under sig, så att de ser tryckbara ut.
+  const accentDeep = oklch(Math.max(0.2, aL - (dark ? 0.12 : 0.13)), aC, aH)
+  const fun = (L: number, C: number, h: number) => [rgbToHex(oklch(dark ? L + 0.06 : L, C, h)), rgbToHex(oklch((dark ? L + 0.06 : L) - 0.12, C, h))]
+  const [coral, coralDeep] = fun(0.7, 0.19, 30)
+  const [sun, sunDeep] = fun(0.85, 0.16, 85)
+  const [mint, mintDeep] = fun(0.76, 0.16, 165)
+  const [sky, skyDeep] = fun(0.74, 0.14, 240)
+
   return {
+    '--accent-deep': rgbToHex(accentDeep),
+    '--coral': coral,
+    '--coral-deep': coralDeep,
+    '--sun': sun,
+    '--sun-deep': sunDeep,
+    '--mint': mint,
+    '--mint-deep': mintDeep,
+    '--sky': sky,
+    '--sky-deep': skyDeep,
     '--bg': rgbToHex(bg),
     '--bg-raised': rgbToHex(raised),
     '--bg-sunken': rgbToHex(sunken),
@@ -158,12 +176,13 @@ export function buildTheme(t: ThemeSettings): Record<string, string> {
     '--bg-tint-2': rgbToHex(tint2),
     '--surface': rgbToHex(surface),
     '--surface-2': rgbToHex(surface2),
+    // Stigens kort: en tydlig kant runt om och en mjuk skugga under.
     '--surface-shadow': dark
-      ? `inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 10px 30px -18px rgba(0, 0, 0, 0.7)`
-      : `0 0 0 1px rgba(${shadowRgb}, 0.07), 0 1px 2px rgba(${shadowRgb}, 0.05), 0 8px 24px -14px rgba(${shadowRgb}, 0.2)`,
+      ? `inset 0 0 0 2px ${rgbToHex(line)}, 0 14px 34px -20px rgba(0, 0, 0, 0.8)`
+      : `inset 0 0 0 2px ${rgbToHex(line)}, 0 12px 30px -18px rgba(${shadowRgb}, 0.28)`,
     '--surface-shadow-hover': dark
-      ? `inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 16px 40px -18px rgba(0, 0, 0, 0.8)`
-      : `0 0 0 1px rgba(${shadowRgb}, 0.09), 0 2px 4px rgba(${shadowRgb}, 0.05), 0 16px 36px -16px rgba(${shadowRgb}, 0.26)`,
+      ? `inset 0 0 0 2px ${rgbToHex(oklch(baseL + 0.2, tint * 3, H))}, 0 18px 40px -20px rgba(0, 0, 0, 0.85)`
+      : `inset 0 0 0 2px ${rgbToHex(oklch(baseL - 0.14, tint * 3, H))}, 0 16px 36px -18px rgba(${shadowRgb}, 0.32)`,
     '--shadow-rgb': shadowRgb,
     '--line': rgbToHex(line),
     '--text': rgbToHex(text),
@@ -188,7 +207,8 @@ export function buildTheme(t: ThemeSettings): Record<string, string> {
 
 /* ---------- Spara och använda ---------- */
 
-const KEY = 'matte.theme.v2'
+// Ny nyckel med den nya designen, så att alla börjar i Stigens färger.
+const KEY = 'grinda.theme.v3'
 
 export function loadTheme(): ThemeSettings {
   try {

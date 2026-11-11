@@ -156,16 +156,21 @@ export function computeProgress(exercises: Exercise[], attempts: Attempt[], draw
 
 /** Framstegen uppdateras automatiskt när du gör ett nytt försök. */
 export function useProgress(exercises: Exercise[] | undefined): Progress | null {
-  const [progress, setProgress] = useState<Progress | null>(null)
+  // Kom ihåg vilka uppgifter framstegen räknades för. Byter du ämne hinner sidan rita om med
+  // de nya uppgifterna innan framstegen räknats om – då ska den vänta, inte läsa gamla siffror.
+  const [state, setState] = useState<{ for: Exercise[]; progress: Progress } | null>(null)
   useEffect(() => {
     if (!exercises) return
     const sub = liveQuery(async () => {
       const [attempts, drawings] = await Promise.all([db.attempts.toArray(), db.drawings.toArray()])
       return computeProgress(exercises, attempts, drawings)
-    }).subscribe({ next: setProgress, error: () => setProgress(computeProgress(exercises, [], [])) })
+    }).subscribe({
+      next: (progress) => setState({ for: exercises, progress }),
+      error: () => setState({ for: exercises, progress: computeProgress(exercises, [], []) }),
+    })
     return () => sub.unsubscribe()
   }, [exercises])
-  return progress
+  return state && state.for === exercises ? state.progress : null
 }
 
 /** Uppgiften som hjälteytan föreslår: påbörjad, annars nästa nya, annars en missad. */
