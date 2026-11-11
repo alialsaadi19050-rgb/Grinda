@@ -1,25 +1,67 @@
-// Formelbladet inne i en uppgift: en panel från höger med alla formler. Uppgiftens delområde
-// visas först, sedan resten av kapitlet och sist de andra kapitlen (med sök).
+// Formelbladet inne i en uppgift: en panel från höger. I fysik visas hela formelsamlingen i
+// samma ordning som din tryckta formelbok, så att du tränar på att hitta rätt formel själv.
+// I matte visas genomgångarnas regler i bokens ordning.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ContentIndex, Lesson } from '../content/types.ts'
 import { loadContentOnce } from '../content/load.ts'
 import { Search, Sigma } from '../design/icons.tsx'
 import { lessonHref, useLessons } from '../lessons/data.ts'
+import { subjectOf, type Subject } from '../subject/subject.ts'
 import { MathText } from '../ui/MathText.tsx'
+import { FormulaBookView, useFormulaBook } from './FormulaBook.tsx'
 import './formulas.css'
 
 type Rule = { title: string; text: string }
 export const rulesOf = (l: Lesson): Rule[] => l.blocks.flatMap((b) => (b.type === 'rule' ? [{ title: b.title, text: b.text }] : []))
 
-export function FormulaDrawer({ topic, chapter, onClose }: { topic?: string; chapter: number; onClose: () => void }) {
+/** Genomgångarnas regler för ett ämne, i bokens ordning. */
+export function LessonRules({ lessons, index, subject, query }: { lessons: Lesson[]; index: ContentIndex; subject: Subject; query: string }) {
+  const q = query.trim().toLowerCase()
+  const chapters = index.chapters.filter((c) => subjectOf(c) === subject)
+  const groups = chapters
+    .map((c) => ({
+      chapter: c,
+      items: lessons
+        .filter((l) => l.chapter === c.id)
+        .map((l) => ({ lesson: l, rules: rulesOf(l).filter((r) => !q || `${r.title} ${r.text} ${l.topic}`.toLowerCase().includes(q)) }))
+        .filter((x) => x.rules.length),
+    }))
+    .filter((g) => g.items.length)
+  if (!groups.length) return <p className="fd-empty">{q ? `Ingen formel matchar ”${query}”.` : 'Det finns inga formler här än.'}</p>
+  return (
+    <div className="fbk">
+      {groups.map((g) => (
+        <section key={g.chapter.id} className="fbk-chapter">
+          <h2>{g.chapter.title}</h2>
+          {g.items.map(({ lesson, rules }) => (
+            <div key={lesson.id}>
+              <h3>
+                <a href={lessonHref(lesson.id)}>{lesson.topic}</a>
+              </h3>
+              {rules.map((r, i) => (
+                <article key={i} className="fb-card">
+                  <h4>{r.title}</h4>
+                  <MathText text={r.text} />
+                </article>
+              ))}
+            </div>
+          ))}
+        </section>
+      ))}
+    </div>
+  )
+}
+
+export function FormulaDrawer({ chapter, onClose }: { topic?: string; chapter: number; onClose: () => void }) {
   const lessons = useLessons()
+  const book = useFormulaBook()
   const [index, setIndex] = useState<ContentIndex | null>(null)
-  useEffect(() => {
-    loadContentOnce().then((c) => setIndex(c.index), () => {})
-  }, [])
   const [query, setQuery] = useState('')
   const panel = useRef<HTMLElement>(null)
 
+  useEffect(() => {
+    loadContentOnce().then((c) => setIndex(c.index), () => {})
+  }, [])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -27,22 +69,11 @@ export function FormulaDrawer({ topic, chapter, onClose }: { topic?: string; cha
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  // Alla formler: uppgiftens delområde först, sedan resten av kapitlet och sist de andra kapitlen.
-  const { mine, groups } = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    const withRules = (lessons ?? [])
-      .map((l) => ({ lesson: l, rules: rulesOf(l).filter((r) => !q || `${r.title} ${r.text} ${l.topic}`.toLowerCase().includes(q)) }))
-      .filter((x) => x.rules.length)
-    const mine = withRules.filter((x) => x.lesson.topic === topic)
-    const rest = withRules.filter((x) => x.lesson.topic !== topic)
-    const chapters = [...new Set(rest.map((x) => x.lesson.chapter))].sort((a, b) => Number(b === chapter) - Number(a === chapter))
-    const groups = chapters.map((c) => ({
-      chapter: c,
-      label: index?.chapters.find((x) => x.id === c),
-      items: rest.filter((x) => x.lesson.chapter === c),
-    }))
-    return { mine, groups }
-  }, [lessons, chapter, topic, query, index])
+  const subject = useMemo<Subject>(() => {
+    const c = index?.chapters.find((x) => x.id === chapter)
+    return c ? subjectOf(c) : chapter === 102 ? 'fysik' : 'matte'
+  }, [index, chapter])
+  const showBook = subject === 'fysik' && !!book
 
   return (
     <div className="fd-backdrop" onClick={onClose}>
@@ -51,7 +82,7 @@ export function FormulaDrawer({ topic, chapter, onClose }: { topic?: string; cha
           <span className="fd-icon">
             <Sigma size={18} />
           </span>
-          <h2>Formler</h2>
+          <h2>{showBook ? 'Formelsamling' : 'Formler'}</h2>
           <button className="fd-close" onClick={onClose} aria-label="Stäng formelbladet">
             ×
           </button>
@@ -61,47 +92,12 @@ export function FormulaDrawer({ topic, chapter, onClose }: { topic?: string; cha
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Sök formel …" aria-label="Sök i formelbladet" />
         </label>
         <div className="fd-body">
-          {!lessons ? (
+          {book === undefined || !lessons || !index ? (
             <p className="fd-empty">Hämtar …</p>
-          ) : !mine.length && !groups.length ? (
-            <p className="fd-empty">{query ? `Ingen formel matchar ”${query}”.` : 'Det finns inga formler än.'}</p>
+          ) : showBook ? (
+            <FormulaBookView book={book} query={query} compact />
           ) : (
-            <>
-              {mine.map(({ lesson, rules }) => (
-                <section key={lesson.id} className="fd-topic mine">
-                  <h3>
-                    Till den här uppgiften · <a href={lessonHref(lesson.id)}>{lesson.topic}</a>
-                  </h3>
-                  {rules.map((r, i) => (
-                    <article key={i} className="fb-card">
-                      <h4>{r.title}</h4>
-                      <MathText text={r.text} />
-                    </article>
-                  ))}
-                </section>
-              ))}
-              {groups.map((g) => (
-                <div key={g.chapter} className="fd-chapter">
-                  <h3 className="fd-chapter-title">
-                    {g.chapter === chapter ? 'Resten av kapitlet' : (g.label?.label ?? `Kapitel ${g.chapter}`)}
-                    {g.chapter !== chapter && g.label?.title ? <small> · {g.label.title}</small> : null}
-                  </h3>
-                  {g.items.map(({ lesson, rules }) => (
-                    <details key={lesson.id} className="fd-topic" open={!!query}>
-                      <summary>
-                        {lesson.topic} <small>{rules.length}</small>
-                      </summary>
-                      {rules.map((r, i) => (
-                        <article key={i} className="fb-card">
-                          <h4>{r.title}</h4>
-                          <MathText text={r.text} />
-                        </article>
-                      ))}
-                    </details>
-                  ))}
-                </div>
-              ))}
-            </>
+            <LessonRules lessons={lessons} index={index} subject={subject} query={query} />
           )}
         </div>
         <a className="fd-all" href="#/formler">
