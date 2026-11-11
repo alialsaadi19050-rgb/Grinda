@@ -203,12 +203,14 @@ function ChapterPath({ chapter, content, progress, lessons, lessonDone, featured
         nodes.push({ key: `l-${lesson.id}`, kind: 'lesson', label: 'Genomgång', sub: lesson.title, href: lessonHref(lesson.id), state: lessonDone(lesson.id) ? 'done' : 'open' })
       }
       const isCurrent = exs.includes(featured)
+      // Trycker du på ett område kommer du direkt till första uppgiften du inte klarat där.
+      const firstOpen = isCurrent ? featured : exs.find((e) => progress.byExercise[e.id].status !== 'correct')
       nodes.push({
         key: `s-${s.section}-${topic}`,
         kind: 'set',
         label: topic || sectionLabel(s),
         sub: `${done} av ${exs.length} klara`,
-        href: isCurrent ? exerciseHref(featured.id) : `#/kapitel/${chapter.id}?avsnitt=${encodeURIComponent(s.section)}${topic ? `&omrade=${encodeURIComponent(topic)}` : ''}`,
+        href: firstOpen ? exerciseHref(firstOpen.id) : `#/kapitel/${chapter.id}?avsnitt=${encodeURIComponent(s.section)}${topic ? `&omrade=${encodeURIComponent(topic)}` : ''}`,
         state: done === exs.length ? 'done' : isCurrent ? 'current' : done > 0 ? 'open' : 'later',
       })
     }
