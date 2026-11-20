@@ -1123,3 +1123,18 @@ h3 {
   width: min(760px, calc(100% - 24px));
   margin: 14px auto 0;
 }
+
+/* Kortet "Med i prov 2" på kapitelsidan */
+:root .ch-section.ch-exam {
+  background: color-mix(in srgb, var(--sun) 16%, var(--surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sun) 60%, transparent);
+}
+:root .ch-section.ch-exam.on {
+  box-shadow: inset 0 0 0 3px var(--sun-deep);
+}
+:root .ch-section.ch-exam .mk-bar span {
+  background: var(--sun-deep);
+}
+:root[data-theme='dark'] .ch-section.ch-exam .mk-bar span {
+  background: var(--sun);
+}

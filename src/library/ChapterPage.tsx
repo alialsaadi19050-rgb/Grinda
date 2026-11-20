@@ -1,6 +1,7 @@
 import { setSubject, subjectOf } from '../subject/subject.ts'
+import { EXAMS, examStatus } from '../exam/exams.ts'
 import { useEffect, useMemo, useState } from 'react'
-import type { Level } from '../content/types.ts'
+import type { Exercise, Level } from '../content/types.ts'
 import { CoverArt } from '../design/Cover.tsx'
 import { ThemeEditor } from '../design/ThemeEditor.tsx'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
@@ -28,6 +29,9 @@ function readQuery() {
   return { section: q.get('avsnitt'), topic: q.get('omrade') }
 }
 
+/** Sökvärdet för "avsnittet" med provets uppgifter, t.ex. #/kapitel/102?avsnitt=prov. */
+const EXAM_SECTION = 'prov'
+
 export function ChapterPage({ chapterId }: { chapterId: number }) {
   const content = useContent()
   const everything = useContent('all')
@@ -54,15 +58,21 @@ export function ChapterPage({ chapterId }: { chapterId: number }) {
   const share = all.length ? solved / all.length : 0
   const next = recommend(all, progress)
 
+  // Provet för kapitlet (om det finns ett): visas som ett eget "avsnitt" med uppgifterna som ingår.
+  const exam = EXAMS.find((x) => x.chapter === chapter.id)
+  const inExam = (e: Exercise) => examStatus(e)?.included !== 'none'
+  const examAll = exam ? all.filter(inExam) : []
+  const examSolved = examAll.filter((e) => progress.byExercise[e.id].status === 'correct').length
+  const inSection = (e: Exercise) => !section || (section === EXAM_SECTION ? inExam(e) : e.section === section)
   const matches = (id: string, f: Filter) => (f === 'saved' ? !!bookmarks[id] : f === 'redo' ? progress.byExercise[id].needsRedo : progress.byExercise[id].status === f)
   const visible = all.filter(
     (e) =>
-      (!section || e.section === section) &&
+      inSection(e) &&
       (!topic || e.topic === topic) &&
       (status === 'all' || matches(e.id, status)) &&
       (!levels.size || (!!e.level && levels.has(e.level))),
   )
-  const topics = [...new Set(all.filter((e) => !section || e.section === section).map((e) => e.topic).filter(Boolean))] as string[]
+  const topics = [...new Set(all.filter(inSection).map((e) => e.topic).filter(Boolean))] as string[]
   const groups = content.sections
     .filter((s) => s.exercises.some((e) => e.chapter === chapter.id))
     .map((s) => ({ s, items: visible.filter((e) => e.section === s.section) }))
@@ -123,6 +133,17 @@ export function ChapterPage({ chapterId }: { chapterId: number }) {
               {solved} / {all.length}
             </small>
           </button>
+          {exam && (
+            <button className={`ch-section ch-exam ${section === EXAM_SECTION ? 'on' : ''}`} onClick={() => (setSection(EXAM_SECTION), setTopic(null))}>
+              <span>Med i {exam.title}</span>
+              <span className="mk-bar">
+                <span style={{ width: `${examAll.length ? (100 * examSolved) / examAll.length : 0}%` }} />
+              </span>
+              <small>
+                {examSolved} / {examAll.length}
+              </small>
+            </button>
+          )}
           {chapter.sections.map((s) => {
             const st = progress.sections.find((x) => x.section === s.id)
             if (!st) return null
@@ -146,7 +167,7 @@ export function ChapterPage({ chapterId }: { chapterId: number }) {
             {STATUS_FILTERS.map((f) => (
               <button key={f.id} className={status === f.id ? 'on' : ''} onClick={() => setStatus(f.id)} aria-pressed={status === f.id}>
                 {f.label}
-                {f.id !== 'all' && <i>{all.filter((e) => matches(e.id, f.id) && (!section || e.section === section)).length}</i>}
+                {f.id !== 'all' && <i>{all.filter((e) => matches(e.id, f.id) && inSection(e)).length}</i>}
               </button>
             ))}
           </div>
