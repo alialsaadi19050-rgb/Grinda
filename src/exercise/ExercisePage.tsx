@@ -16,6 +16,7 @@ import { actionForEvent, S620_ASPECT, updateSettings, useSettings } from '../set
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
 import { ThemeEditor } from '../design/ThemeEditor.tsx'
 import { QuickJump } from '../library/QuickJump.tsx'
+import { examStatus } from '../exam/exams.ts'
 import { toggleBookmark, useBookmarks } from '../bookmarks/bookmarks.ts'
 import { lessonHref, useLessons } from '../lessons/data.ts'
 import { attemptsFor, currentRound, startRedo } from '../storage/db.ts'
@@ -336,6 +337,8 @@ export function ExercisePage({ id }: { id: string }) {
         </div>
       </header>
 
+      <ExamNote ex={ex} />
+
       {plain ? (
         <div className="ex-plain">
           <section className="ex-plain-problem" aria-label={`Uppgift ${ex.number}`}>
@@ -368,6 +371,34 @@ export function ExercisePage({ id }: { id: string }) {
       {formulasOpen && <FormulaDrawer topic={ex.topic} chapter={ex.chapter} onClose={() => setFormulasOpen(false)} />}
       {reportOpen && <ReportDialog ex={ex} onClose={() => setReportOpen(false)} />}
       <ThemeEditor />
+    </div>
+  )
+}
+
+/** En liten varning när uppgiften inte ingår (eller bara delvis ingår) i provet. */
+function ExamNote({ ex }: { ex: { id: string; chapter: number; number: string; parts: { label: string | null }[] } }) {
+  const [hidden, setHidden] = useState<string | null>(null)
+  const st = examStatus(ex)
+  if (!st || st.included === 'all' || hidden === ex.id) return null
+  const parts = st.included === 'some' ? st.parts : []
+  const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} och ${parts.at(-1)}` : parts[0]
+  return (
+    <div className={`ex-exam ${st.included}`} role="note">
+      <span aria-hidden="true">⚠</span>
+      <span>
+        {st.included === 'none' ? (
+          <>
+            Ingår inte i <b>{st.exam.title}</b> – uppgiften finns inte med på listan.
+          </>
+        ) : (
+          <>
+            Till <b>{st.exam.title}</b> ingår bara {parts.length > 1 ? 'deluppgifterna' : 'deluppgift'} {list}.
+          </>
+        )}
+      </span>
+      <button onClick={() => setHidden(ex.id)} aria-label="Dölj varningen" title="Dölj">
+        ×
+      </button>
     </div>
   )
 }
