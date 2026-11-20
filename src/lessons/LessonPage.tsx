@@ -2,7 +2,7 @@
 // och små testfrågor som rättas på samma sätt som uppgifterna.
 import { useEffect, useRef, useState } from 'react'
 import type { Exercise, LessonBlock } from '../content/types.ts'
-import { lessonHref, practiceHref, useLessons } from './data.ts'
+import { lessonBack, lessonHref, practiceHref, useLessons } from './data.ts'
 import { checkAnswer, type CheckStatus } from '../check/check.ts'
 import { MathInput, type MathInputHandle } from '../check/MathInput.tsx'
 import { Animation } from './anim/index.tsx'
@@ -26,6 +26,8 @@ export function LessonPage({ id }: { id: string }) {
   const progress = useLessonProgress()
   const [askOpen, setAskOpen] = useState(false)
   const [scroll, setScroll] = useState(0)
+  // Öppnades genomgången från en uppgift visas en knapp tillbaka dit.
+  const [back] = useState(lessonBack)
 
   useEffect(() => {
     markSeen(id)
@@ -50,12 +52,14 @@ export function LessonPage({ id }: { id: string }) {
   const examples = lesson.blocks.filter((b) => b.type === 'example').length
   const practice = content?.exercises.filter((e: Exercise) => e.topic === lesson.topic).length
   const section = content?.index.chapters.flatMap((c) => c.sections).find((s) => s.id === lesson.section)
+  const backEx = back?.startsWith('#/uppgift/') ? content?.exercises.find((e) => e.id === decodeURIComponent(back.slice('#/uppgift/'.length))) : undefined
+  const backLabel = back ? (backEx ? `Uppgift ${backEx.number}` : back.startsWith('#/ova/nya/') ? 'Övningen' : 'Tillbaka') : null
 
   return (
     <div className="ls grain">
       <header className="ls-top">
-        <a className="ex-back" href="#/lar">
-          <ChevronLeft size={18} /> Lär dig
+        <a className="ex-back" href={back ?? '#/lar'}>
+          <ChevronLeft size={18} /> {backLabel ?? 'Lär dig'}
         </a>
         <span className="ls-top-title">{lesson.title}</span>
         <button className={`ls-ask ${askOpen ? 'on' : ''}`} onClick={() => setAskOpen((o) => !o)} aria-pressed={askOpen}>
@@ -96,7 +100,12 @@ export function LessonPage({ id }: { id: string }) {
             <button className="ls-btn ghost" onClick={() => markDone(lesson.id, !p.done)} aria-pressed={!!p.done}>
               <Check size={16} strokeWidth={3} /> {p.done ? 'Markerad som klar' : 'Markera som klar'}
             </button>
-            <a className="ls-btn" href={practiceHref(lesson)} onClick={() => !p.done && markDone(lesson.id, true)}>
+            {back && (
+              <a className="ls-btn" href={back}>
+                <ChevronLeft size={16} /> Tillbaka till {backLabel?.toLowerCase()}
+              </a>
+            )}
+            <a className={`ls-btn ${back ? 'ghost' : ''}`} href={practiceHref(lesson)} onClick={() => !p.done && markDone(lesson.id, true)}>
               Öva på uppgifterna{practice ? ` (${practice})` : ''} <ChevronRight size={16} />
             </a>
             {next && (
@@ -107,6 +116,12 @@ export function LessonPage({ id }: { id: string }) {
           </div>
         </section>
       </article>
+
+      {back && (
+        <a className="ls-backpill" href={back}>
+          <ChevronLeft size={16} /> Tillbaka till {backLabel?.toLowerCase()}
+        </a>
+      )}
 
       {askOpen && (
         <div className="ls-ai">

@@ -13,5 +13,14 @@ export function useLessons(): Lesson[] | null {
   return lessons
 }
 
-export const lessonHref = (id: string) => `#/lar/${encodeURIComponent(id)}`
+/** Länk till en genomgång. Med `back` (t.ex. uppgiftens adress) visar genomgången en knapp tillbaka dit. */
+export const lessonHref = (id: string, back?: string) => `#/lar/${encodeURIComponent(id)}${back ? `?tillbaka=${encodeURIComponent(back)}` : ''}`
+
+/** Adressen genomgången öppnades från (om den öppnades från en uppgift). */
+export const lessonBack = (): string | null => {
+  const m = /[?&]tillbaka=([^&]+)/.exec(location.hash)
+  const back = m ? decodeURIComponent(m[1]) : null
+  // Bara länkar inom appen.
+  return back && back.startsWith('#/') ? back : null
+}
 export const practiceHref = (l: Lesson) => `#/kapitel/${l.chapter}?avsnitt=${encodeURIComponent(l.section)}&omrade=${encodeURIComponent(l.topic)}`

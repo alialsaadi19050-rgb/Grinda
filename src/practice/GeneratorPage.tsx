@@ -102,7 +102,7 @@ export function GeneratorPage({ id }: { id: string }) {
             <MathText text={made.prompt} />
           </div>
           {lesson && (
-            <a className="ex-lesson" href={lessonHref(lesson.id)} title="Läs bokens teori och exempel">
+            <a className="ex-lesson" href={lessonHref(lesson.id, location.hash)} title="Läs bokens teori och exempel – du kommer tillbaka hit efteråt">
               Genomgång: {lesson.title}
             </a>
           )}

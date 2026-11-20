@@ -195,7 +195,7 @@ export function ExercisePage({ id }: { id: string }) {
       {(lesson || generator) && (
         <div className="ex-links">
           {lesson && (
-            <a className="ex-lesson" href={lessonHref(lesson.id)} title="Läs bokens teori och exempel">
+            <a className="ex-lesson" href={lessonHref(lesson.id, `#/uppgift/${encodeURIComponent(ex.id)}`)} title="Läs bokens teori och exempel – du kommer tillbaka hit efteråt">
               Genomgång: {lesson.title}
             </a>
           )}

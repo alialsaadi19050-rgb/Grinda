@@ -692,3 +692,29 @@
 :root[data-theme='dark'] .ls-summary-box li::before {
   color: var(--mint);
 }
+
+/* Knappen tillbaka till uppgiften man kom från, alltid synlig nere i hörnet. */
+.ls-backpill {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px 12px 14px;
+  border-radius: 16px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow:
+    0 4px 0 var(--accent-deep),
+    0 16px 30px -12px rgba(0, 0, 0, 0.45);
+  font: 800 14px/1 var(--font-ui);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.ls-backpill:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--accent-deep);
+}
