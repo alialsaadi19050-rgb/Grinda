@@ -21,7 +21,8 @@ import './lessons.css'
 
 export function LessonPage({ id }: { id: string }) {
   const lessons = useLessons()
-  const content = useContent()
+  // Alla ämnen, så att avsnittets namn hittas även om ett annat ämne är valt.
+  const content = useContent('all')
   const progress = useLessonProgress()
   const [askOpen, setAskOpen] = useState(false)
   const [scroll, setScroll] = useState(0)
@@ -165,6 +166,47 @@ function Block({ block: b, solved, onSolved }: { block: LessonBlock; solved: boo
       )
     case 'derivation':
       return <Derivation block={b} />
+    case 'goals':
+      return (
+        <section className="ls-goals">
+          <span className="ls-label">Det här lär du dig</span>
+          <ul>
+            {b.items.map((g, i) => (
+              <li key={i}>
+                <MathText text={g} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    case 'think':
+      return <Think block={b} />
+    case 'mistake':
+      return (
+        <aside className="ls-mistake">
+          <span className="ls-mistake-icon" aria-hidden="true">
+            !
+          </span>
+          <div>
+            <span className="ls-label">Vanligt misstag</span>
+            <strong>{b.title}</strong>
+            <MathText text={b.text} />
+          </div>
+        </aside>
+      )
+    case 'summary':
+      return (
+        <section className="ls-summary-box">
+          <span className="ls-label">Sammanfattning</span>
+          <ul>
+            {b.items.map((s, i) => (
+              <li key={i}>
+                <MathText text={s} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
     case 'animation':
       return (
         <figure className="ls-anim">
@@ -175,6 +217,24 @@ function Block({ block: b, solved, onSolved }: { block: LessonBlock; solved: boo
         </figure>
       )
   }
+}
+
+/** Tänk efter: fundera själv först, sedan kan du visa svaret. */
+function Think({ block: b }: { block: Extract<LessonBlock, { type: 'think' }> }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section className={`ls-think ${open ? 'open' : ''}`}>
+      <span className="ls-label">Tänk efter</span>
+      <MathText className="ls-prompt" text={b.prompt} />
+      {open ? (
+        <MathText className="ls-think-answer" text={b.answer} />
+      ) : (
+        <button className="ls-btn small ghost" onClick={() => setOpen(true)}>
+          Visa svaret
+        </button>
+      )}
+    </section>
+  )
 }
 
 /** En härledning: hopfälld från början så att man kan hoppa över den. */

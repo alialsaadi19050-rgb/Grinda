@@ -224,6 +224,14 @@ export type LessonBlock =
   | { type: 'derivation'; title: string; intro?: string; steps: { math: string; why: string }[]; result?: string }
   /** En animation av en rörelse, kraft eller process, med start/paus/återställ och reglage. */
   | { type: 'animation'; anim: AnimationKind; caption: string; options?: Record<string, number | string | boolean> }
+  /** Det här lär du dig – överst i genomgången. */
+  | { type: 'goals'; items: string[] }
+  /** En fråga att fundera på, med svaret dolt tills man trycker. Rättas inte. */
+  | { type: 'think'; prompt: string; answer: string }
+  /** Ett vanligt misstag och hur man undviker det. */
+  | { type: 'mistake'; title: string; text: string }
+  /** Sammanfattning – sist i genomgången. */
+  | { type: 'summary'; items: string[] }
 
 export type AnimationKind =
   | 'spring'

@@ -306,6 +306,10 @@ function describeLesson(l: Lesson): string {
     else if (b.type === 'check') lines.push(`Testfråga: ${b.prompt} (lösning: ${b.solution})`)
     else if (b.type === 'derivation') lines.push(`Härledning – ${b.title}: ${b.steps.map((st) => `${st.math} (${st.why})`).join(' ')}`)
     else if (b.type === 'animation') lines.push(`Animation: ${b.caption}`)
+    else if (b.type === 'goals') lines.push(`Mål: ${b.items.join('; ')}`)
+    else if (b.type === 'think') lines.push(`Tänk efter: ${b.prompt} (svar: ${b.answer})`)
+    else if (b.type === 'mistake') lines.push(`Vanligt misstag – ${b.title}: ${b.text}`)
+    else if (b.type === 'summary') lines.push(`Sammanfattning: ${b.items.join('; ')}`)
     lines.push('')
   }
   return lines.join('\n')
