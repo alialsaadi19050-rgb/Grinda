@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react'
 import { ThemeEditor } from '../design/ThemeEditor.tsx'
 import { useGame } from '../game/useGame.ts'
-import { exerciseHref, Nav } from '../library/Library.tsx'
+import { exerciseHref, Nav, useContent } from '../library/Library.tsx'
+import { UserProgressLine } from './UserProgress.tsx'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
 import { useCanInvite } from '../vault/InviteTab.tsx'
 import { myId } from '../social/api.ts'
 import { slotId } from '../vault/crypto.ts'
-import { announce, fetchAnnouncement, fetchOverview, fetchReports, fetchUsers, updateReport, userAction, type AdminUser, type Overview, type Report, type UserAction } from './api.ts'
+import { announce, fetchAnnouncement, fetchOverview, fetchProgress, fetchReports, fetchUsers, updateReport, userAction, type AdminUser, type Overview, type UserProgress, type Report, type UserAction } from './api.ts'
 import '../practice/practice.css'
 import '../social/social.css'
 import './admin.css'
@@ -272,7 +273,13 @@ function Users() {
   const [pending, setPending] = useState<{ user: AdminUser; action: (typeof ACTIONS)[number] } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const me = myId()
-  const load = () => fetchUsers().then(setList, (e: Error) => setError(e.message))
+  const content = useContent('all')
+  const [progress, setProgress] = useState<Map<string, UserProgress>>(new Map())
+  const load = () =>
+    Promise.all([
+      fetchUsers().then(setList, (e: Error) => setError(e.message)),
+      fetchProgress().then((rows) => setProgress(new Map(rows.map((r) => [r.user_id, r]))), (e: Error) => setError(e.message)),
+    ])
   useEffect(() => {
     void load()
   }, [])
@@ -324,6 +331,7 @@ function Users() {
                   <span>
                     Senast {when(u.last_seen)} · {u.attempts} svar ({u.attempts_week} i veckan) · id {u.id.slice(0, 8)}
                   </span>
+                  <UserProgressLine p={progress.get(u.id)} content={content} />
                 </span>
               </span>
               <span className="pr-actions">

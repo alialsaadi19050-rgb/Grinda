@@ -34,13 +34,15 @@ if (cmd === 'count') {
   await writeVault(me.files, me.bookKey!, slots, me.user ? [{ user: me.user, password: me.password! }, neu] : [neu])
   console.log(`Klart: ”${neu.user.trim()}” kan nu logga in. Boken har ${slots.length} inloggningar. Pusha för att lägga ut ändringen.`)
 } else if (cmd === 'remove') {
-  const me = await openWithLogin(vault)
-  const name = await ask('\nAnvändarnamn som ska tas bort: ')
+  // Med en sparad boknyckel behöver du inte logga in. Namnet kan ges direkt: npm run users -- remove kalle
+  const saved = await openWithSavedKey(vault)
+  const me: { files: VaultFiles; bookKey: Uint8Array | null; user?: string; password?: string } = saved ?? (await openWithLogin(vault))
+  const name = process.argv[3] ?? (await ask('\nAnvändarnamn som ska tas bort: '))
   const id = await slotId(name)
   if (!vault.slots.some((s) => s.id === id)) throw new Error(`Hittar ingen inloggning som heter ”${name}”.`)
   const slots = vault.slots.filter((s) => s.id !== id)
   if (!slots.length) throw new Error('Det går inte att ta bort den sista inloggningen.')
-  const keep = (await slotId(me.user)) === id ? [] : [me]
+  const keep = me.user && (await slotId(me.user)) !== id ? [{ user: me.user, password: me.password! }] : []
   await writeVault(me.files, me.bookKey!, slots, keep)
   console.log(`Klart: ”${name.trim()}” är borttagen. Boken har ${slots.length} ${slots.length === 1 ? 'inloggning' : 'inloggningar'}. Pusha för att lägga ut ändringen.`)
 } else {

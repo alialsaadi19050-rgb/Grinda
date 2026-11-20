@@ -40,6 +40,16 @@ export interface AdminUser {
 }
 export type UserAction = 'reset' | 'block' | 'unblock' | 'make_admin' | 'remove_admin' | 'delete'
 export const fetchUsers = () => rpc<AdminUser[]>('admin_users', auth())
+
+/** Per uppgift: antal svar, vilka delar som blivit rätt, antal fel och senaste svaret (ms). */
+export interface UserProgress {
+  user_id: string
+  exercises: Record<string, { tries: number; correct: number[]; wrong: number; last: number }>
+  active_days: number
+  first_at: number | null
+  last_at: number | null
+}
+export const fetchProgress = () => rpc<UserProgress[]>('admin_user_progress', auth())
 export const userAction = (target: string, action: UserAction) => rpc('admin_user_action', { ...auth(), p_target: target, p_action: action })
 
 export interface Overview {
