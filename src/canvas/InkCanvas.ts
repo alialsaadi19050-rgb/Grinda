@@ -57,6 +57,8 @@ export interface InkCallbacks {
   onStatus?: (status: InkStatus) => void
   /** Pennan rapporterar alltid trycket 0,5 – drivrutinen skickar inte tryck till webbläsaren. */
   onPressureMissing?: () => void
+  /** En gest med fingrarna: två fingrar tryck = ångra, tre fingrar tryck = gör om. */
+  onGesture?: (kind: 'undo' | 'redo') => void
 }
 
 type Action =
@@ -95,6 +97,12 @@ export class InkCanvas {
   private selection = new Set<string>()
   private touches = new Map<number, [number, number]>()
   private pinch: { dist: number; mid: [number, number]; view: View } | null = null
+  /** Senaste gången pennan rörde skärmen (ms). Fingrar strax efter är oftast handflatan. */
+  private lastPen = 0
+  /** Fingrar som räknas som handflata under det här tryck-pass och därför ignoreras. */
+  private palms = new Set<number>()
+  /** Pågående fingertryck: för att känna igen ett snabbt tryck med två eller tre fingrar. */
+  private tap: { start: number; max: number; moved: boolean; origin: Map<number, [number, number]> } | null = null
   private spaceHeld = false
   private barrel = false
   private hover: { x: number; y: number; type: string } | null = null
@@ -600,6 +608,16 @@ export class InkCanvas {
       this.touchDown(e)
       return
     }
+    if (e.pointerType === 'pen') {
+      this.lastPen = performance.now()
+      // Pennan vinner: släpp en pågående fingergest (handflatan som landade först).
+      if (this.touches.size) {
+        for (const id of this.touches.keys()) this.palms.add(id)
+        this.touches.clear()
+        this.pinch = null
+        this.tap = null
+      }
+    }
     if (this.action) return
     e.preventDefault()
     this.capture(e.pointerId)
@@ -704,6 +722,7 @@ export class InkCanvas {
       this.touchMove(e)
       return
     }
+    if (e.pointerType === 'pen') this.lastPen = performance.now()
     // Pennan svävar: uppdatera bara markören.
     this.hover = { x: e.offsetX, y: e.offsetY, type: e.pointerType }
     if (!this.action) {
@@ -799,6 +818,7 @@ export class InkCanvas {
       this.touchUp(e)
       return
     }
+    if (e.pointerType === 'pen') this.lastPen = performance.now()
     const a = this.action
     if (!a || e.pointerId !== a.pointerId) return
     this.action = null
@@ -884,8 +904,18 @@ export class InkCanvas {
   /* ---------- Pekskärm: panorera och nyp för att zooma, aldrig rita ---------- */
 
   private touchDown(e: PointerEvent) {
+    // Handflatan: fingrar som landar medan pennan ritar, eller strax efter, ignoreras.
+    const penActive = this.action?.kind === 'draw' || this.action?.kind === 'erase' || this.action?.kind === 'shape' || this.action?.kind === 'lasso'
+    if (penActive || performance.now() - this.lastPen < 600) {
+      this.palms.add(e.pointerId)
+      return
+    }
     this.capture(e.pointerId)
     this.touches.set(e.pointerId, [e.clientX, e.clientY])
+    // Ett snabbt tryck med flera fingrar blir en gest (ångra/gör om).
+    if (!this.tap || this.touches.size === 1) this.tap = { start: performance.now(), max: 0, moved: false, origin: new Map() }
+    this.tap.origin.set(e.pointerId, [e.clientX, e.clientY])
+    this.tap.max = Math.max(this.tap.max, this.touches.size)
     this.hover = null
     this.updateCursor()
     this.startGesture()
@@ -902,6 +932,9 @@ export class InkCanvas {
   }
 
   private touchMove(e: PointerEvent) {
+    if (this.palms.has(e.pointerId)) return
+    const o = this.tap?.origin.get(e.pointerId)
+    if (this.tap && o && Math.hypot(e.clientX - o[0], e.clientY - o[1]) > 12) this.tap.moved = true
     if (!this.touches.has(e.pointerId) || !this.pinch) return
     this.touches.set(e.pointerId, [e.clientX, e.clientY])
     const pts = [...this.touches.values()]
@@ -924,7 +957,18 @@ export class InkCanvas {
   }
 
   private touchUp(e: PointerEvent) {
+    if (this.palms.delete(e.pointerId)) return
     this.touches.delete(e.pointerId)
+    const t = this.tap
+    if (t && !this.touches.size) {
+      this.tap = null
+      // Kort tryck utan att röra fingrarna: 2 fingrar ångrar, 3 gör om.
+      if (!t.moved && performance.now() - t.start < 350 && t.max >= 2) {
+        if (t.max === 2) this.undo()
+        else this.redo()
+        this.cb.onGesture?.(t.max === 2 ? 'undo' : 'redo')
+      }
+    }
     this.pinch = null
     this.startGesture()
   }

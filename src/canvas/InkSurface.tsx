@@ -65,6 +65,9 @@ export const InkSurface = forwardRef<InkSurfaceHandle, Props>(function InkSurfac
     saveDrawing({ exerciseId: loadedFor.current, strokes: p.strokes, background: p.background, updatedAt: Date.now() }).then(() => setSaved('saved'))
   }
 
+  const [gesture, setGesture] = useState<string | null>(null)
+  const gestureTimer = useRef(0)
+
   // Skapa motorn en gång.
   useEffect(() => {
     const ink = new InkCanvas(host.current!, {
@@ -77,6 +80,12 @@ export const InkSurface = forwardRef<InkSurfaceHandle, Props>(function InkSurfac
       onStatus: setStatus,
       onPressureMissing: () => {
         if (!getSettings().pressureHintDismissed) setPressureHint(true)
+      },
+      // Två fingrar = ångra, tre = gör om (som i ritappar på iPad). Visa kort vad som hände.
+      onGesture: (kind) => {
+        setGesture(kind === 'undo' ? '↶ Ångrat' : '↷ Gjort om')
+        clearTimeout(gestureTimer.current)
+        gestureTimer.current = window.setTimeout(() => setGesture(null), 900)
       },
     }, getSettings().lowLatency)
     ink.setTools(getSettings().tools)
@@ -314,6 +323,7 @@ export const InkSurface = forwardRef<InkSurfaceHandle, Props>(function InkSurfac
       )}
 
       <div className="ex-page-meta" aria-live="polite">
+        {gesture && <span className="ink-chip ink-gesture">{gesture}</span>}
         {status.selected > 0 && <span className="ink-chip">{status.selected} markerade · Delete tar bort</span>}
         {status.measuring && (
           <>

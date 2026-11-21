@@ -1138,3 +1138,71 @@ h3 {
 :root[data-theme='dark'] .ch-section.ch-exam .mk-bar span {
   background: var(--sun);
 }
+
+/* ---------- iPad och Apple Pencil ----------
+ * Pennan ska bara rita: ingen textmarkering, förstoringslupp eller meny när den vilar mot
+ * skärmen, ingen dubbeltryckszoom och ingen studs när man skriver nära kanten. */
+.ink-canvas,
+.ink-surface,
+.ex-work,
+.gen-scratch {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+html:has(.ex:not(.plain)) {
+  overscroll-behavior: none;
+}
+@media (min-width: 641px) {
+  /* Safari på iPad räknar 100vh utan adressfältet; dvh är den höjd som faktiskt syns. */
+  :root .ex:not(.plain) {
+    height: 100dvh;
+  }
+}
+/* Större träffytor för fingrar och penna på pekskärmar. */
+@media (pointer: coarse) and (min-width: 641px) {
+  :root .ex-icon {
+    width: 42px;
+    height: 42px;
+  }
+  :root .ex-top-right {
+    gap: 4px;
+  }
+}
+
+/* Förslaget att byta till ritplattan när man skriver med penna */
+:root .ex-penhint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(760px, calc(100% - 24px));
+  margin: 14px auto 0;
+  padding: 10px 10px 10px 16px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+  font-size: 14px;
+  font-weight: 700;
+}
+:root .ex-penhint .ex-check {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 12.5px;
+}
+.ex-penhint-x {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 18px;
+}
+@media (max-width: 640px) {
+  :root .ex-penhint {
+    flex-wrap: wrap;
+  }
+}

@@ -338,6 +338,7 @@ export function ExercisePage({ id }: { id: string }) {
       </header>
 
       <ExamNote ex={ex} />
+      {plain && <PenHint />}
 
       {plain ? (
         <div className="ex-plain">
@@ -397,6 +398,44 @@ function ExamNote({ ex }: { ex: { id: string; chapter: number; number: string; p
         )}
       </span>
       <button onClick={() => setHidden(ex.id)} aria-label="Dölj varningen" title="Dölj">
+        ×
+      </button>
+    </div>
+  )
+}
+
+const PEN_HINT_KEY = 'grinda.penhint.v1'
+
+/** Skriver du med en penna (Apple Pencil) i läget utan ritplatta föreslås ritplattan. */
+function PenHint() {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(PEN_HINT_KEY)) return
+    } catch {
+      /* ingen lagring: visa ändå */
+    }
+    const onDown = (e: PointerEvent) => e.pointerType === 'pen' && setShow(true)
+    window.addEventListener('pointerdown', onDown)
+    return () => window.removeEventListener('pointerdown', onDown)
+  }, [])
+  if (!show) return null
+  const dismiss = () => {
+    setShow(false)
+    try {
+      localStorage.setItem(PEN_HINT_KEY, '1')
+    } catch {
+      /* visas igen nästa gång */
+    }
+  }
+  return (
+    <div className="ex-penhint" role="note">
+      <span aria-hidden="true">✏️</span>
+      <span>Du skriver med en penna. Med ritplattan kan du räkna direkt bredvid uppgiften, med tryckkänslighet.</span>
+      <button className="ex-check" onClick={() => (dismiss(), updateSettings({ tablet: true }))}>
+        Byt till ritplatta
+      </button>
+      <button className="ex-penhint-x" onClick={dismiss} aria-label="Nej tack">
         ×
       </button>
     </div>

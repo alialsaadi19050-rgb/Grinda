@@ -142,7 +142,8 @@ export const DEFAULT_SETTINGS: Settings = {
   pressureHintDismissed: false,
   inputMode: 'math',
   lowLatency: true,
-  tablet: false,
+  // Utan ritplatta som standard – utom på iPad, där Apple Pencil gör ritplattan självklar.
+  tablet: typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1 && /iPad|Macintosh/.test(navigator.userAgent),
   dailyGoal: 10,
   srs: { enabled: true, intervals: [1, 3, 7], maxPerDay: 10 },
   celebrate: true,
