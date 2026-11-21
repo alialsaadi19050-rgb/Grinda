@@ -2,6 +2,7 @@
 import { useSyncExternalStore } from 'react'
 import type { Background, Paper } from '../canvas/types.ts'
 import { DEFAULT_TOOLS, type ToolState } from '../canvas/InkCanvas.ts'
+import { acceptRemotePref, prefChanged } from '../sync/prefStore.ts'
 
 export type ActionId =
   | 'pen'
@@ -171,8 +172,26 @@ export function getSettings() {
   return current
 }
 
-export function updateSettings(patch: Partial<Settings> | ((s: Settings) => Partial<Settings>)) {
+/**
+ * Inställningarna som följer med kontot till alla enheter. Resten (ritplattan, skrivzonen,
+ * verktygen, kortkommandon, papper) hör till enheten – en iPad och en dator vill olika.
+ */
+export const SYNCED_SETTINGS = ['dailyGoal', 'srs', 'celebrate', 'textSize', 'easyFont', 'sound'] as const
+type Synced = Pick<Settings, (typeof SYNCED_SETTINGS)[number]>
+
+export const studyPrefs = (): Synced => Object.fromEntries(SYNCED_SETTINGS.map((k) => [k, current[k]])) as Synced
+
+/** Studieinställningar från en annan enhet. */
+export function applyRemoteStudyPrefs(data: Partial<Synced>, updatedAt: number) {
+  if (!acceptRemotePref('study', updatedAt)) return
+  const patch = Object.fromEntries(SYNCED_SETTINGS.filter((k) => k in data).map((k) => [k, data[k]])) as Partial<Settings>
+  if (patch.srs) patch.srs = { ...DEFAULT_SETTINGS.srs, ...patch.srs }
+  updateSettings(patch, { remote: true })
+}
+
+export function updateSettings(patch: Partial<Settings> | ((s: Settings) => Partial<Settings>), opts: { remote?: boolean } = {}) {
   const p = typeof patch === 'function' ? patch(current) : patch
+  if (!opts.remote && SYNCED_SETTINGS.some((k) => k in p && JSON.stringify(p[k]) !== JSON.stringify(current[k]))) prefChanged('study')
   current = { ...current, ...p }
   try {
     localStorage.setItem(KEY, JSON.stringify(current))

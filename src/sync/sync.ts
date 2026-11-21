@@ -11,6 +11,10 @@ import { applyRemoteLesson, clearLessonProgress, lessonDoc, lessonIds, type Less
 import { clearDirty, markDirty, readDirty, replaceDirty, setChangeListener, type Dirty } from './changes.ts'
 import { AI_DOC, aiSnapshot, applyRemoteAi, clearAiLocal } from '../ai/ai.ts'
 import { seal, unseal, type Sealed } from '../vault/crypto.ts'
+import { prefChangedAt, type PrefId } from './prefStore.ts'
+import { applyRemoteStudyPrefs, studyPrefs } from '../settings/settings.ts'
+import { applyRemoteAdjust, readAdjust, type SrsAdjust } from '../practice/srs.ts'
+import { applyRemoteTheme, themePrefs } from '../design/ThemeEditor.tsx'
 
 import { RPC_URL as URL, RPC_KEY as KEY } from './supabase.ts'
 
@@ -108,14 +112,23 @@ async function docFor(key: string, c: SyncCreds): Promise<Doc | null> {
     const l = lessonDoc(id)
     return l ? { key, data: l.data, updatedAt: l.updatedAt } : null
   }
+  if (kind === 'pref') {
+    const at = prefChangedAt(id as PrefId)
+    if (!at) return null
+    const data = id === 'study' ? studyPrefs() : id === 'srs' ? readAdjust() : id === 'theme' ? themePrefs() : null
+    return data ? { key, data, updatedAt: at } : null
+  }
   return null
 }
+
+const PREFS: PrefId[] = ['study', 'srs', 'theme']
 
 /** Allt som finns lokalt, för första uppladdningen från en enhet. */
 async function everything(): Promise<Dirty> {
   const attempts = (await db.attempts.toArray()).flatMap((a) => (a.uid ? [a.uid] : []))
   const drawings = (await db.drawings.toCollection().primaryKeys()).map((id) => `drawing:${id}`)
-  return { attempts, docs: [...drawings, ...bookmarkIds().map((id) => `bookmark:${id}`), ...lessonIds().map((id) => `lesson:${id}`), ...(aiSnapshot() ? [AI_DOC] : [])] }
+  const prefs = PREFS.filter((id) => prefChangedAt(id)).map((id) => `pref:${id}`)
+  return { attempts, docs: [...drawings, ...bookmarkIds().map((id) => `bookmark:${id}`), ...lessonIds().map((id) => `lesson:${id}`), ...prefs, ...(aiSnapshot() ? [AI_DOC] : [])] }
 }
 
 /* ---------- Ändringar från andra enheter ---------- */
@@ -148,6 +161,10 @@ async function applyRemote(attempts: Attempt[], docs: Doc[], c: SyncCreds) {
       applyRemoteBookmark(id, d.updatedAt, !!d.deleted)
     } else if (kind === 'lesson' && d.data) {
       applyRemoteLesson(id, d.data as LessonProgress, d.updatedAt)
+    } else if (kind === 'pref' && d.data && !d.deleted) {
+      if (id === 'study') applyRemoteStudyPrefs(d.data as Parameters<typeof applyRemoteStudyPrefs>[0], d.updatedAt)
+      else if (id === 'srs') applyRemoteAdjust(d.data as SrsAdjust, d.updatedAt)
+      else if (id === 'theme') applyRemoteTheme(d.data as Parameters<typeof applyRemoteTheme>[0], d.updatedAt)
     }
   }
 }

@@ -3,6 +3,7 @@
 // Får du fel igen börjar den om. Allt räknas ut från dina försök, så det följer med i synken.
 import type { Exercise } from '../content/types.ts'
 import { resolveOverrides, type Attempt } from '../storage/db.ts'
+import { acceptRemotePref, prefChanged } from '../sync/prefStore.ts'
 
 const DAY = 86_400_000
 export const startOfDay = (t: number) => {
@@ -118,13 +119,19 @@ export function readAdjust(): SrsAdjust {
   }
 }
 
-function writeAdjust(a: SrsAdjust) {
+function writeAdjust(a: SrsAdjust, remote = false) {
   try {
     localStorage.setItem(KEY, JSON.stringify(a))
   } catch {
     /* gäller bara den här sessionen */
   }
+  if (!remote) prefChanged('srs')
   window.dispatchEvent(new Event('grinda:srs'))
+}
+
+/** Uppskjutningar och borttagningar från en annan enhet (den senaste ändringen gäller). */
+export function applyRemoteAdjust(a: SrsAdjust, updatedAt: number) {
+  if (acceptRemotePref('srs', updatedAt)) writeAdjust({ snooze: { ...a.snooze }, removed: { ...a.removed } }, true)
 }
 
 export function snooze(exerciseId: string, days: number, now = Date.now()) {

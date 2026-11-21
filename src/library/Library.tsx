@@ -109,7 +109,7 @@ export function Library() {
             </Row>
           )}
         </div>
-        <footer className="mk-foot">Innehållet är avskrivet från din egen bok för eget bruk. Allt du gör sparas bara i den här webbläsaren – gör en backup under Inställningar → Data.</footer>
+        <footer className="mk-foot">Innehållet är avskrivet från din egen bok för eget bruk. Allt du gör synkas till ditt konto, så du fortsätter där du var på alla enheter.</footer>
       </main>
       {settingsOpen && <SettingsDialog initialTab={settingsOpen} onClose={() => setSettingsOpen(false)} />}
       <ThemeEditor />

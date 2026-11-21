@@ -630,7 +630,7 @@ function SyncStatusView({ mod }: { mod: typeof import('../sync/sync.ts') }) {
   return (
     <section className="st-section">
       <h3>Synk mellan enheter</h3>
-      <p className="st-help">Dina försök, det du skrivit på skrivytan, sparade uppgifter och genomgångar synkas automatiskt till alla enheter där du är inloggad. Inställningar och färger stannar på varje enhet.</p>
+      <p className="st-help">Allt du gör synkas automatiskt till alla enheter där du är inloggad med samma konto: försök, det du skrivit på skrivytan, sparade uppgifter, genomgångar, dagligt mål, repetitionen och färgerna. Det som hör till själva enheten – ritplattan, skrivzonen, verktygen, kortkommandon och ljust/mörkt läge – stannar där.</p>
       <p className={`st-note ${st.kind === 'ok' ? 'ok' : ''}`}>{text}</p>
       <button className="st-secondary" disabled={st.kind === 'syncing' || st.kind === 'off'} onClick={() => mod.syncNow()}>
         Synka nu
@@ -656,7 +656,7 @@ function DataTab() {
       <section className="st-section">
         <h3>Spara en backup</h3>
         <p className="st-help">
-          Allt du gör – svar, försök, det du skrivit på skrivytan, inställningar och färger – sparas bara i den här webbläsaren. Spara en backupfil då och då, och flytta den om du byter dator eller webbläsare.
+          Allt du gör synkas till ditt konto och följer med till dina andra enheter. Vill du ha en egen kopia kan du spara en backupfil.
         </p>
         <button className="st-secondary" onClick={exportAll}>
           Spara backup (.json)

@@ -1,16 +1,31 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { applyTheme, buildTheme, DEFAULT_THEME, loadTheme, PRESETS, resolveMode, saveTheme, type ThemeSettings } from './theme.ts'
+import { acceptRemotePref, prefChanged } from '../sync/prefStore.ts'
 import './theme-editor.css'
 
 /* Ett litet globalt lager för temat så att alla sidor ser samma val. */
 let current: ThemeSettings = loadTheme()
 const listeners = new Set<() => void>()
 
-export function setTheme(patch: Partial<ThemeSettings>) {
+export function setTheme(patch: Partial<ThemeSettings>, remote = false) {
   current = { ...current, ...patch }
   applyTheme(current)
   saveTheme(current)
+  // Färgerna följer med kontot. Ljust/mörkt läge hör till enheten (en iPad och en dator kan vilja olika).
+  if (!remote && Object.keys(patch).some((k) => k !== 'mode')) prefChanged('theme')
   listeners.forEach((l) => l())
+}
+
+export const themePrefs = (): Omit<ThemeSettings, 'mode'> => {
+  const { mode: _mode, ...rest } = current
+  return rest
+}
+
+/** Färger från en annan enhet. */
+export function applyRemoteTheme(t: Partial<ThemeSettings>, updatedAt: number) {
+  if (!acceptRemotePref('theme', updatedAt)) return
+  const { mode: _mode, ...colors } = t
+  setTheme(colors, true)
 }
 
 export function useTheme(): ThemeSettings {

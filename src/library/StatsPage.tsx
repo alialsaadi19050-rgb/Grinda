@@ -161,7 +161,7 @@ export function StatsPage() {
 
         <section className="stp-section">
           <h2>Din data</h2>
-          <p className="mk-row-note">Allt sparas bara i den här webbläsaren. Gör en backup då och då, och flytta den till en annan dator om du byter.</p>
+          <p className="mk-row-note">Allt synkas till ditt konto och följer med till alla enheter där du loggar in. Vill du ha en egen kopia kan du spara en backup.</p>
           <button className="mk-btn-ghost" onClick={() => setSettingsOpen('data')}>
             Backup och återställning
           </button>
