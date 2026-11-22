@@ -43,10 +43,13 @@ export const pulseReflection: AnimSpec = {
     const { c, w, h } = g
     const end = String(p.end)
     const L = 0.55
-    const r = end === 'wall' ? -1 : end === 'dense' ? -0.45 : 0.45
-    const tau = 1 + r
+    // Samma spänning i båda strängarna: vågfarten är v₂ (halva eller dubbla farten) och
+    // reflektionen r = (v₂ − v₁)/(v₂ + v₁), transmissionen 1 + r. Fast vägg: r = −1.
     const v2 = end === 'dense' ? 0.5 : 2
-    const tt = (t % 3.2) - 0.25
+    const r = end === 'wall' ? -1 : (v2 - 1) / (v2 + 1)
+    const tau = 1 + r
+    // Ett varv: pulsen kommer in från vänster, reflekteras och går ut igen – utan lång tom paus.
+    const tt = (t % 1.6) - 0.12
     const f = shapeOf('smooth')
     const y = (u: number) => {
       if (u <= L) return f(u - tt) + r * f(2 * L - u - tt)
