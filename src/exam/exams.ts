@@ -8,6 +8,13 @@ export interface Exam {
   chapter: number
   /** Uppgifternas nummer som i lärarens lista, t.ex. "201-205", "240ab-245", "2.64ab", "2100a-2103". */
   lists: string[]
+  /** Boksidorna som ingår, som de står i listan. */
+  pages: string
+  /**
+   * Genomgångar som inte ingår (none) eller bara delvis ingår (some) enligt sidlistan.
+   * Genomgångar som inte står här ingår helt.
+   */
+  lessons: Record<string, { included: 'none' } | { included: 'some'; note: string }>
 }
 
 export const EXAMS: Exam[] = [
@@ -23,6 +30,15 @@ export const EXAMS: Exam[] = [
       // Stjärnuppgifter
       '270-272, 274-280, 283-284, 286-289ab, 291-295, 297, 2100a-2103, 2105',
     ],
+    pages: 's. 54–halva 71, 72–80, 82–90, halva 92–96, 101–102, 104–halva 106, 109–122',
+    lessons: {
+      'f2-pendlar': { included: 'some', note: 'Den matematiska pendeln ingår, men inte den fysikaliska pendeln (nedre halvan av s. 71).' },
+      'f2-staende': { included: 'some', note: 'Sidan 81 står inte med – vågornas hastighet i en sträng, $v = \\sqrt{\\frac{F}{\\rho A}}$.' },
+      'f2-ljudstyrka': { included: 'some', note: 'Hörseln och örat (s. 91 och början av s. 92) ingår inte. Ljudstyrka, intensitet och decibel ingår.' },
+      'f2-doppler': { included: 'some', note: 'Bara början av dopplereffekten (s. 96) står med. Sidan 97 – dopplerformeln och snabbare än ljudet – och exempel 2.11 på s. 99 står inte med. Fråga läraren om formeln ingår.' },
+      'f2-svavningar': { included: 'none' },
+      'f2-huygens': { included: 'some', note: 'Huygens princip och diffraktion ingår. Jordbävningar och tsunamier (s. 106–108) ingår inte.' },
+    },
   },
 ]
 
@@ -80,4 +96,13 @@ export function examStatus(ex: { chapter: number; number: string; parts: { label
   // Står alla deluppgifter med räknas den som hel.
   if (labels.length && labels.every((l) => parts.has(l))) return { exam, included: 'all' }
   return { exam, included: 'some', parts: [...parts] }
+}
+
+/** Om genomgången hör till ett provs kapitel: ingår den helt, delvis eller inte alls? */
+export function lessonExamStatus(lesson: { id: string; chapter: number }): { exam: Exam; included: 'all' | 'none' | 'some'; note?: string } | null {
+  const exam = EXAMS.find((e) => e.chapter === lesson.chapter)
+  if (!exam) return null
+  const l = exam.lessons[lesson.id]
+  if (!l) return { exam, included: 'all' }
+  return { exam, ...l }
 }

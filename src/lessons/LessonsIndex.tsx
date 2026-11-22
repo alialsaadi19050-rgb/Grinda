@@ -1,5 +1,6 @@
 // Översikten över genomgångarna, ordnade efter avsnitt.
 import { useState } from 'react'
+import { lessonExamStatus } from '../exam/exams.ts'
 import { Poster, motifFor } from '../design/Cover.tsx'
 import { Check, Play } from '../design/icons.tsx'
 import { Nav, useContent } from '../library/Library.tsx'
@@ -71,6 +72,11 @@ export function LessonsIndex() {
                       <span className="li-meta">
                         ≈ {l.minutes} min · {(p?.checks.length ?? 0)}/{checks} testfrågor
                       </span>
+                      {(() => {
+                        const st = lessonExamStatus(l)
+                        if (!st || st.included === 'all') return null
+                        return <span className={`li-exam ${st.included}`}>{st.included === 'none' ? `Ingår inte i ${st.exam.title}` : `Delvis med i ${st.exam.title}`}</span>
+                      })()}
                       <a className="li-practice" href={practiceHref(l)}>
                         Öva · {topic.solved} av {topic.total} uppgifter klara
                       </a>

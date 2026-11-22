@@ -1,6 +1,7 @@
 // En genomgång: bokens teori, regler och exempel, med exempel som visas steg för steg
 // och små testfrågor som rättas på samma sätt som uppgifterna.
 import { useEffect, useRef, useState } from 'react'
+import { lessonExamStatus } from '../exam/exams.ts'
 import type { Exercise, LessonBlock } from '../content/types.ts'
 import { lessonBack, lessonHref, practiceHref, useLessons } from './data.ts'
 import { checkAnswer, type CheckStatus } from '../check/check.ts'
@@ -84,6 +85,24 @@ export function LessonPage({ id }: { id: string }) {
             <span>Boksidor {lesson.pages.join(', ')}</span>
           </p>
         </div>
+
+        {(() => {
+          const st = lessonExamStatus(lesson)
+          if (!st || st.included === 'all') return null
+          return (
+            <aside className={`ls-exam ${st.included}`} role="note">
+              <span aria-hidden="true">⚠</span>
+              <div>
+                <b>{st.included === 'none' ? `Ingår inte i ${st.exam.title}` : `Delvis med i ${st.exam.title}`}</b>
+                {st.included === 'none' ? (
+                  <span> – sidorna står inte med i provets sidlista.</span>
+                ) : (
+                  <MathText text={st.note ?? ''} />
+                )}
+              </div>
+            </aside>
+          )
+        })()}
 
         {lesson.blocks.map((b, i) => (
           <Block key={`${lesson.id}-${i}`} block={b} solved={p.checks.includes(i)} onSolved={() => markCheck(lesson.id, i)} />

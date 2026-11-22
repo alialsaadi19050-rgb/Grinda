@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { examStatus, parseList } from './exams.ts'
+import katex from 'katex'
+import { EXAMS, examStatus, lessonExamStatus, parseList } from './exams.ts'
 
 const ex = (number: string, labels: (string | null)[] = [null], chapter = 102) => ({ chapter, number, parts: labels.map((label) => ({ label })) })
 
@@ -25,5 +26,19 @@ describe('provlistan', () => {
 
   it('bryr sig inte om andra kapitel', () => {
     expect(examStatus(ex('1101', [null], 1))).toBeNull()
+  })
+})
+
+describe('teorin i provet', () => {
+  it('säger vilka genomgångar som ingår', () => {
+    expect(lessonExamStatus({ id: 'f2-fjadrar', chapter: 102 })?.included).toBe('all')
+    expect(lessonExamStatus({ id: 'f2-svavningar', chapter: 102 })?.included).toBe('none')
+    expect(lessonExamStatus({ id: 'f2-huygens', chapter: 102 })?.included).toBe('some')
+    expect(lessonExamStatus({ id: 'ladprincipen', chapter: 1 })).toBeNull()
+  })
+  it('formlerna i anteckningarna går att rita', () => {
+    for (const exam of EXAMS)
+      for (const l of Object.values(exam.lessons))
+        if (l.included === 'some') for (const m of l.note.matchAll(/\$([^$]+)\$/g)) expect(() => katex.renderToString(m[1], { throwOnError: true })).not.toThrow()
   })
 })

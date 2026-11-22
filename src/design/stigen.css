@@ -1206,3 +1206,47 @@ html:has(.ex:not(.plain)) {
     flex-wrap: wrap;
   }
 }
+
+/* Genomgångar som inte (eller bara delvis) ingår i provet */
+:root .ls-exam {
+  display: flex;
+  gap: 12px;
+  margin: 6px 0 22px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--sun) 16%, var(--surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sun) 60%, transparent);
+  font-size: 15px;
+}
+:root .ls-exam > span {
+  color: var(--sun-deep);
+  font-size: 18px;
+}
+:root[data-theme='dark'] .ls-exam > span {
+  color: var(--sun);
+}
+:root .ls-exam b {
+  font-weight: 800;
+}
+:root .ls-exam .math-text,
+:root .ls-exam .math-text p {
+  display: inline;
+  margin: 0;
+}
+:root .ls-exam .math-text::before {
+  content: ' – ';
+}
+.li-exam {
+  justify-self: start;
+  align-self: start;
+  width: fit-content;
+  margin-top: 4px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--sun) 22%, transparent);
+  color: var(--sun-deep);
+  font: 800 12px/1.4 var(--font-ui);
+}
+:root[data-theme='dark'] .li-exam {
+  color: var(--sun);
+}
