@@ -15,6 +15,11 @@ export interface Exam {
    * Genomgångar som inte står här ingår helt.
    */
   lessons: Record<string, { included: 'none' } | { included: 'some'; note: string }>
+  /**
+   * Uppgifter som inte står på listan men liknar bokens provuppgifter (bra extraövning).
+   * best är de som är extra värda att göra.
+   */
+  extra?: { all: string; best: string }
 }
 
 export const EXAMS: Exam[] = [
@@ -38,6 +43,13 @@ export const EXAMS: Exam[] = [
       'f2-doppler': { included: 'some', note: 'Bara början av dopplereffekten (s. 96) står med. Sidan 97 – dopplerformeln och snabbare än ljudet – och exempel 2.11 på s. 99 står inte med. Fråga läraren om formeln ingår.' },
       'f2-svavningar': { included: 'none' },
       'f2-huygens': { included: 'some', note: 'Huygens princip och diffraktion ingår. Jordbävningar och tsunamier (s. 106–108) ingår inte.' },
+    },
+    // Övningsboken: uppgifter som liknar provets uppgifter i läroboken. Svävningar, fysikalisk pendel,
+    // hörseln, dopplerformeln och ljudhastighetens temperaturberoende är bortvalda (står inte med).
+    extra: {
+      all:
+        '2.1-2.7, 2.9-2.12, 2.15-2.17, 2.18a, 2.19-2.21, 2.23, 2.26-2.28, 2.30-2.40, 2.42, 2.44-2.47, 2.49, 2.51, 2.52, 2.57-2.60, 2.70-2.72, 2.74, 2.76',
+      best: '2.3, 2.4, 2.5, 2.7, 2.12, 2.15, 2.16, 2.17, 2.21, 2.26, 2.27, 2.28, 2.35, 2.37, 2.40, 2.44, 2.45, 2.46, 2.49, 2.52, 2.58, 2.59, 2.60, 2.70, 2.71, 2.72, 2.74, 2.76',
     },
   },
 ]
@@ -72,24 +84,40 @@ export function parseList(list: string): ExamItems {
   return out
 }
 
-const cache = new Map<string, ExamItems>()
+const cache = new Map<string, { items: ExamItems; extra: ExamItems; best: ExamItems }>()
 const itemsOf = (exam: Exam) => {
-  let items = cache.get(exam.id)
-  if (!items) {
-    items = new Map(exam.lists.flatMap((l) => [...parseList(l)]))
-    cache.set(exam.id, items)
+  let c = cache.get(exam.id)
+  if (!c) {
+    c = {
+      items: new Map(exam.lists.flatMap((l) => [...parseList(l)])),
+      extra: exam.extra ? parseList(exam.extra.all) : new Map(),
+      best: exam.extra ? parseList(exam.extra.best) : new Map(),
+    }
+    cache.set(exam.id, c)
   }
-  return items
+  return c
 }
 
-export type ExamStatus = { exam: Exam; included: 'all' } | { exam: Exam; included: 'none' } | { exam: Exam; included: 'some'; parts: string[] }
+export type ExamStatus =
+  | { exam: Exam; included: 'all' }
+  | { exam: Exam; included: 'none' }
+  | { exam: Exam; included: 'some'; parts: string[] }
+  /** Inte på listan, men en bra extraövning. parts = bara vissa deluppgifter. */
+  | { exam: Exam; included: 'extra'; best: boolean; parts: string[] | null }
+
+/** Ingår uppgiften (helt eller delvis) i provet? */
+export const inExam = (st: ExamStatus | null) => st?.included === 'all' || st?.included === 'some'
 
 /** Om uppgiften hör till ett provs kapitel: ingår den helt, delvis eller inte alls? */
 export function examStatus(ex: { chapter: number; number: string; parts: { label: string | null }[] }): ExamStatus | null {
   const exam = EXAMS.find((e) => e.chapter === ex.chapter)
   if (!exam) return null
-  const items = itemsOf(exam)
-  if (!items.has(ex.number)) return { exam, included: 'none' }
+  const { items, extra, best } = itemsOf(exam)
+  if (!items.has(ex.number)) {
+    if (!extra.has(ex.number)) return { exam, included: 'none' }
+    const p = extra.get(ex.number)
+    return { exam, included: 'extra', best: best.has(ex.number), parts: p ? [...p] : null }
+  }
   const parts = items.get(ex.number)
   if (!parts) return { exam, included: 'all' }
   const labels = ex.parts.map((p) => p.label).filter((l): l is string => !!l)

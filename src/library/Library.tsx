@@ -427,12 +427,12 @@ function Row({ title, note, meta, href, variant, children }: { title: string; no
 
 const STATUS_LABEL: Record<Status, string> = { new: 'Ny', attempted: 'Påbörjad', correct: 'Klar', missed: 'Missad' }
 
-export function Tile({ ex, progress }: { ex: Exercise; progress: Progress }) {
+export function Tile({ ex, progress, star = false }: { ex: Exercise; progress: Progress; star?: boolean }) {
   const p = progress.byExercise[ex.id]
   const saved = !!useBookmarks()[ex.id]
   const fig = [...(ex.figures ?? []), ...ex.parts.flatMap((p) => p.figures ?? [])].find((f) => f.kind !== 'table')
   return (
-    <a className={`mk-tile st-${p.status} ${saved ? 'saved' : ''}`} href={exerciseHref(ex.id)} onClick={markTransition} aria-label={`Uppgift ${ex.number}${ex.level ? `, nivå ${ex.level}` : ''}, ${STATUS_LABEL[p.status]}${saved ? ', sparad till senare' : ''}`}>
+    <a className={`mk-tile st-${p.status} ${saved ? 'saved' : ''}`} href={exerciseHref(ex.id)} onClick={markTransition} aria-label={`Uppgift ${ex.number}${ex.level ? `, nivå ${ex.level}` : ''}${star ? ', extra värd att göra' : ''}, ${STATUS_LABEL[p.status]}${saved ? ', sparad till senare' : ''}`}>
       <div className="mk-tile-card">
         <div className="mk-tile-thumb" aria-hidden="true">
           <MathText text={ex.prompt || ex.parts[0].prompt || ''} />
@@ -444,6 +444,11 @@ export function Tile({ ex, progress }: { ex: Exercise; progress: Progress }) {
         </div>
         <div className="mk-tile-shade" />
         {ex.level && <span className={`mk-lvl mk-lvl-${ex.level}`}>{ex.level.toUpperCase()}</span>}
+        {star && (
+          <span className={`mk-star ${ex.level ? 'after-lvl' : ''}`} title="Extra värd att göra">
+            ★
+          </span>
+        )}
         {p.status === 'correct' && (
           <span className="mk-badge ok">
             <Check size={14} strokeWidth={3} />

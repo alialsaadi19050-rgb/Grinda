@@ -1,5 +1,5 @@
 import { setSubject, subjectOf } from '../subject/subject.ts'
-import { EXAMS, examStatus } from '../exam/exams.ts'
+import { EXAMS, examStatus, inExam as inExamStatus } from '../exam/exams.ts'
 import { useEffect, useMemo, useState } from 'react'
 import type { Exercise, Level } from '../content/types.ts'
 import { CoverArt } from '../design/Cover.tsx'
@@ -31,6 +31,8 @@ function readQuery() {
 
 /** Sökvärdet för "avsnittet" med provets uppgifter, t.ex. #/kapitel/102?avsnitt=prov. */
 const EXAM_SECTION = 'prov'
+/** Övningsbokens extrauppgifter till provet, #/kapitel/102?avsnitt=extra. */
+const EXTRA_SECTION = 'extra'
 
 export function ChapterPage({ chapterId }: { chapterId: number }) {
   const content = useContent()
@@ -60,10 +62,18 @@ export function ChapterPage({ chapterId }: { chapterId: number }) {
 
   // Provet för kapitlet (om det finns ett): visas som ett eget "avsnitt" med uppgifterna som ingår.
   const exam = EXAMS.find((x) => x.chapter === chapter.id)
-  const inExam = (e: Exercise) => examStatus(e)?.included !== 'none'
+  const inExam = (e: Exercise) => inExamStatus(examStatus(e))
+  const isExtra = (e: Exercise) => examStatus(e)?.included === 'extra'
+  const isBest = (e: Exercise) => {
+    const st = examStatus(e)
+    return st?.included === 'extra' && st.best
+  }
   const examAll = exam ? all.filter(inExam) : []
   const examSolved = examAll.filter((e) => progress.byExercise[e.id].status === 'correct').length
-  const inSection = (e: Exercise) => !section || (section === EXAM_SECTION ? inExam(e) : e.section === section)
+  const extraAll = exam ? all.filter(isExtra) : []
+  const extraSolved = extraAll.filter((e) => progress.byExercise[e.id].status === 'correct').length
+  const inSection = (e: Exercise) =>
+    !section || (section === EXAM_SECTION ? inExam(e) : section === EXTRA_SECTION ? isExtra(e) : e.section === section)
   const matches = (id: string, f: Filter) => (f === 'saved' ? !!bookmarks[id] : f === 'redo' ? progress.byExercise[id].needsRedo : progress.byExercise[id].status === f)
   const visible = all.filter(
     (e) =>
@@ -144,6 +154,17 @@ export function ChapterPage({ chapterId }: { chapterId: number }) {
               </small>
             </button>
           )}
+          {exam && extraAll.length > 0 && (
+            <button className={`ch-section ch-exam ch-extra ${section === EXTRA_SECTION ? 'on' : ''}`} onClick={() => (setSection(EXTRA_SECTION), setTopic(null))}>
+              <span>Extra till {exam.title}</span>
+              <span className="mk-bar">
+                <span style={{ width: `${(100 * extraSolved) / extraAll.length}%` }} />
+              </span>
+              <small>
+                {extraSolved} / {extraAll.length} · övningsboken, ★ = extra värd
+              </small>
+            </button>
+          )}
           {chapter.sections.map((s) => {
             const st = progress.sections.find((x) => x.section === s.id)
             if (!st) return null
@@ -220,7 +241,7 @@ export function ChapterPage({ chapterId }: { chapterId: number }) {
             <h2>{sectionLabel(s)}</h2>
             <div className="ch-grid">
               {items.map((e) => (
-                <Tile key={e.id} ex={e} progress={progress} />
+                <Tile key={e.id} ex={e} progress={progress} star={section === EXTRA_SECTION && isBest(e)} />
               ))}
             </div>
           </section>

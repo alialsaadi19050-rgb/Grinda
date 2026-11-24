@@ -1250,3 +1250,46 @@ html:has(.ex:not(.plain)) {
 :root[data-theme='dark'] .li-exam {
   color: var(--sun);
 }
+
+/* Övningsbokens extrauppgifter till provet: grönt i stället för gult */
+:root .ex-exam.extra {
+  background: color-mix(in srgb, var(--mint) 16%, var(--surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--mint) 60%, transparent);
+}
+:root .ex-exam.extra > span:first-child {
+  color: var(--mint-deep);
+}
+:root[data-theme='dark'] .ex-exam.extra > span:first-child {
+  color: var(--mint);
+}
+:root .ch-section.ch-extra {
+  background: color-mix(in srgb, var(--mint) 14%, var(--surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--mint) 60%, transparent);
+}
+:root .ch-section.ch-extra.on {
+  box-shadow: inset 0 0 0 3px var(--mint-deep);
+}
+:root .ch-section.ch-extra .mk-bar span {
+  background: var(--mint-deep);
+}
+:root[data-theme='dark'] .ch-section.ch-extra .mk-bar span {
+  background: var(--mint);
+}
+:root .mk-tile .mk-star {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-grid;
+  place-items: center;
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: 50%;
+  background: var(--sun);
+  color: #3a2a00;
+  font-size: 12px;
+  line-height: 1;
+  box-shadow: 0 2px 0 var(--sun-deep);
+}
+:root .mk-tile .mk-star.after-lvl {
+  left: 44px;
+}

@@ -376,18 +376,23 @@ export function ExercisePage({ id }: { id: string }) {
   )
 }
 
-/** En liten varning när uppgiften inte ingår (eller bara delvis ingår) i provet. */
+/** En liten varning när uppgiften inte ingår (eller bara delvis ingår) i provet, eller ett tips om den är en bra extraövning. */
 function ExamNote({ ex }: { ex: { id: string; chapter: number; number: string; parts: { label: string | null }[] } }) {
   const [hidden, setHidden] = useState<string | null>(null)
   const st = examStatus(ex)
   if (!st || st.included === 'all' || hidden === ex.id) return null
-  const parts = st.included === 'some' ? st.parts : []
+  const parts = st.included === 'some' ? st.parts : st.included === 'extra' ? (st.parts ?? []) : []
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} och ${parts.at(-1)}` : parts[0]
   return (
     <div className={`ex-exam ${st.included}`} role="note">
-      <span aria-hidden="true">⚠</span>
+      <span aria-hidden="true">{st.included === 'extra' ? '★' : '⚠'}</span>
       <span>
-        {st.included === 'none' ? (
+        {st.included === 'extra' ? (
+          <>
+            {st.best ? 'Extra värd att göra' : 'Bra extraövning'} till <b>{st.exam.title}</b> – liknar bokens provuppgifter
+            {parts.length ? ` (bara ${parts.length > 1 ? 'deluppgifterna' : 'deluppgift'} ${list})` : ''}.
+          </>
+        ) : st.included === 'none' ? (
           <>
             Ingår inte i <b>{st.exam.title}</b> – uppgiften finns inte med på listan.
           </>
@@ -397,7 +402,7 @@ function ExamNote({ ex }: { ex: { id: string; chapter: number; number: string; p
           </>
         )}
       </span>
-      <button onClick={() => setHidden(ex.id)} aria-label="Dölj varningen" title="Dölj">
+      <button onClick={() => setHidden(ex.id)} aria-label="Dölj" title="Dölj">
         ×
       </button>
     </div>

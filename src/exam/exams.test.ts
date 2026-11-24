@@ -19,9 +19,22 @@ describe('provlistan', () => {
     expect(examStatus(ex('240', ['a', 'b', 'c']))).toMatchObject({ included: 'some', parts: ['a', 'b'] })
     expect(examStatus(ex('2100', ['a', 'b']))).toMatchObject({ included: 'some', parts: ['a'] })
     expect(examStatus(ex('2.13', ['a', 'b']))?.included).toBe('all')
-    expect(examStatus(ex('2.15'))?.included).toBe('none')
+    expect(examStatus(ex('2.61'))?.included).toBe('none')
     expect(examStatus(ex('2105'))?.included).toBe('all')
     expect(examStatus(ex('2104'))?.included).toBe('none')
+  })
+
+  it('övningsbokens extrauppgifter', () => {
+    expect(examStatus(ex('2.15'))).toMatchObject({ included: 'extra', best: true, parts: null })
+    expect(examStatus(ex('2.1'))).toMatchObject({ included: 'extra', best: false })
+    expect(examStatus(ex('2.18', ['a', 'b']))).toMatchObject({ included: 'extra', parts: ['a'] })
+    expect(examStatus(ex('2.24'))?.included).toBe('none')
+    expect(examStatus(ex('2.64', ['a', 'b', 'c']))?.included).toBe('some')
+    const exam = EXAMS[0]
+    const all = parseList(exam.extra!.all)
+    expect(all.size).toBe(50)
+    for (const n of parseList(exam.extra!.best).keys()) expect(all.has(n)).toBe(true)
+    for (const l of exam.lists) for (const n of parseList(l).keys()) expect(all.has(n)).toBe(false)
   })
 
   it('bryr sig inte om andra kapitel', () => {
