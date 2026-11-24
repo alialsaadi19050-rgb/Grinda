@@ -8,7 +8,7 @@ import { Nav, useContent } from '../library/Library.tsx'
 import { useProgress } from '../progress/progress.ts'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
 import { SUBJECTS, useSubject, type Subject } from '../subject/subject.ts'
-import { FormulaBookView, useFormulaBook } from './FormulaBook.tsx'
+import { FormulaBookSwitch, FormulaBookView, useFormulaBooks } from './FormulaBook.tsx'
 import { LessonRules } from './FormulaDrawer.tsx'
 import '../practice/practice.css'
 import './formulas.css'
@@ -17,7 +17,7 @@ export function FormulaPage() {
   const content = useContent('all')
   const mine = useContent()
   const lessons = useLessons()
-  const book = useFormulaBook()
+  const books = useFormulaBooks()
   const subject = useSubject()
   const progress = useProgress(mine?.exercises)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -25,7 +25,8 @@ export function FormulaPage() {
   const [shown, setShown] = useState<Subject>(subject)
   useEffect(() => setShown(subject), [subject])
 
-  if (!content || !lessons || !progress || book === undefined) return <div className="mk-loading">Laddar …</div>
+  if (!content || !lessons || !progress || !books) return <div className="mk-loading">Laddar …</div>
+  const book = books.current?.book
   const showBook = shown === 'fysik' && !!book
 
   return (
@@ -37,7 +38,9 @@ export function FormulaPage() {
             <h1 className="ch-title">Formelblad</h1>
             <p className="pr-lead">
               {showBook
-                ? 'Formelsamlingen i samma ordning som din formelbok – öva på att hitta rätt formel själv. Samma formler finns bakom Formler-knappen i varje uppgift.'
+                ? books.current?.id === 'formelbok'
+                  ? 'Formelsamlingen i samma ordning som din formelbok – öva på att hitta rätt formel själv. Samma formler finns bakom Formler-knappen i varje uppgift.'
+                  : 'Formler, konstanter och tabeller för gymnasiefysiken. Samma formler finns bakom Formler-knappen i varje uppgift.'
                 : 'Alla regler och formler från genomgångarna, i bokens ordning.'}
             </p>
           </div>
@@ -58,7 +61,8 @@ export function FormulaPage() {
             </button>
           </div>
         </header>
-        {showBook ? <FormulaBookView book={book} query={query} /> : <LessonRules lessons={lessons} index={content.index} subject={shown} query={query} />}
+        {showBook && <FormulaBookSwitch state={books} />}
+        {showBook ? <FormulaBookView key={books.current?.id} book={book} query={query} /> : <LessonRules lessons={lessons} index={content.index} subject={shown} query={query} />}
       </main>
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
       <ThemeEditor />

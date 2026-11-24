@@ -535,3 +535,19 @@
   font-size: 17px;
   line-height: 1;
 }
+
+/* Byt mellan formelboken och formelbladet */
+.fbk-switch {
+  align-self: flex-start;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 0 14px;
+}
+.fd .fbk-switch {
+  margin: 0 18px 10px;
+}
+@media print {
+  .fbk-switch {
+    display: none;
+  }
+}

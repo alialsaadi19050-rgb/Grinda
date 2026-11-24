@@ -1,5 +1,5 @@
-// Formelsamlingen för Fysik 2, i samma ordning och med samma rubriker som din tryckta
-// formelbok. Den används både på formelbladet och i panelen inne i uppgifterna, så att du
+// Formelsamlingarna för Fysik 2: den tryckta formelboken (samma ordning och rubriker) och
+// formelbladet "Formler och tabeller för gymnasiet". Den används både på formelbladet och i panelen inne i uppgifterna, så att du
 // tränar på att hitta rätt formel själv.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { contentText } from '../vault/vault.ts'
@@ -17,19 +17,79 @@ export interface FormulaBookData {
   chapters: { title: string; blocks: BookBlock[] }[]
 }
 
-let bookPromise: Promise<FormulaBookData | null> | null = null
+/** Formelsamlingarna för Fysik 2. Den första är den tryckta formelboken. */
+export const FORMULA_BOOKS = [
+  { id: 'formelbok', name: 'Formelboken', path: 'data/formelbok-fysik2.json' },
+  { id: 'formelblad', name: 'Formelblad', path: 'data/formelblad-fy2.json' },
+] as const
+export type FormulaBookId = (typeof FORMULA_BOOKS)[number]['id']
 
-/** Formelsamlingen, eller null om den inte finns i den här versionen av boken. */
-export function useFormulaBook(): FormulaBookData | null | undefined {
-  const [book, setBook] = useState<FormulaBookData | null | undefined>(undefined)
-  useEffect(() => {
-    bookPromise ??= contentText('data/formelbok-fysik2.json').then(
+const promises = new Map<string, Promise<FormulaBookData | null>>()
+const load = (path: string) => {
+  let p = promises.get(path)
+  if (!p) {
+    p = contentText(path).then(
       (t) => JSON.parse(t) as FormulaBookData,
       () => null,
     )
-    bookPromise.then(setBook)
+    promises.set(path, p)
+  }
+  return p
+}
+
+const CHOICE_KEY = 'grinda.formelbok'
+const readChoice = (): FormulaBookId => {
+  try {
+    const v = localStorage.getItem(CHOICE_KEY)
+    if (FORMULA_BOOKS.some((b) => b.id === v)) return v as FormulaBookId
+  } catch {
+    /* privat läge */
+  }
+  return FORMULA_BOOKS[0].id
+}
+
+export type LoadedBook = { id: FormulaBookId; name: string; book: FormulaBookData }
+
+/**
+ * Formelsamlingarna som finns i den här versionen av boken, och den du valde senast.
+ * undefined medan de laddas; en tom lista om ingen finns.
+ */
+export function useFormulaBooks(): { books: LoadedBook[]; current: LoadedBook | null; choose: (id: FormulaBookId) => void } | undefined {
+  const [books, setBooks] = useState<LoadedBook[] | undefined>(undefined)
+  const [choice, setChoice] = useState<FormulaBookId>(readChoice)
+  useEffect(() => {
+    let alive = true
+    Promise.all(FORMULA_BOOKS.map((b) => load(b.path).then((book): LoadedBook | null => (book ? { id: b.id, name: b.name, book } : null)))).then((all) => {
+      if (alive) setBooks(all.filter((b): b is LoadedBook => !!b))
+    })
+    return () => {
+      alive = false
+    }
   }, [])
-  return book
+  if (!books) return undefined
+  const choose = (id: FormulaBookId) => {
+    setChoice(id)
+    try {
+      localStorage.setItem(CHOICE_KEY, id)
+    } catch {
+      /* privat läge */
+    }
+  }
+  return { books, current: books.find((b) => b.id === choice) ?? books[0] ?? null, choose }
+}
+
+/** Knappar för att byta formelsamling, när det finns fler än en. */
+export function FormulaBookSwitch({ state }: { state: NonNullable<ReturnType<typeof useFormulaBooks>> }) {
+  if (state.books.length < 2) return null
+  return (
+    <div className="st-seg fbk-switch" role="tablist" aria-label="Formelsamling">
+      {state.books.map((b) => (
+        <button key={b.id} role="tab" aria-selected={state.current?.id === b.id} className={state.current?.id === b.id ? 'on' : ''} onClick={() => state.choose(b.id)}>
+          {b.name}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 const plain = (s: string) => s.replace(/\\[a-zA-Z]+/g, ' ').replace(/[${}_^]/g, '').toLowerCase()

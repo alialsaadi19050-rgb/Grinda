@@ -8,7 +8,7 @@ import { Search, Sigma } from '../design/icons.tsx'
 import { lessonHref, useLessons } from '../lessons/data.ts'
 import { subjectOf, type Subject } from '../subject/subject.ts'
 import { MathText } from '../ui/MathText.tsx'
-import { FormulaBookView, useFormulaBook } from './FormulaBook.tsx'
+import { FormulaBookSwitch, FormulaBookView, useFormulaBooks } from './FormulaBook.tsx'
 import './formulas.css'
 
 type Rule = { title: string; text: string }
@@ -58,7 +58,8 @@ let lastScroll = 0
 
 export function FormulaDrawer({ chapter, onClose }: { topic?: string; chapter: number; onClose: () => void }) {
   const lessons = useLessons()
-  const book = useFormulaBook()
+  const books = useFormulaBooks()
+  const book = books?.current?.book
   const [index, setIndex] = useState<ContentIndex | null>(null)
   const [query, setQueryState] = useState(lastQuery)
   const setQuery = (q: string) => {
@@ -83,7 +84,7 @@ export function FormulaDrawer({ chapter, onClose }: { topic?: string; chapter: n
     return c ? subjectOf(c) : chapter === 102 ? 'fysik' : 'matte'
   }, [index, chapter])
   const showBook = subject === 'fysik' && !!book
-  const ready = book !== undefined && !!lessons && !!index
+  const ready = !!books && !!lessons && !!index
   // Tillbaka till samma ställe när innehållet laddats.
   useEffect(() => {
     if (ready && body.current) body.current.scrollTop = lastScroll
@@ -110,11 +111,12 @@ export function FormulaDrawer({ chapter, onClose }: { topic?: string; chapter: n
             </button>
           )}
         </label>
+        {showBook && books && <FormulaBookSwitch state={books} />}
         <div className="fd-body" ref={body} onScroll={(e) => (lastScroll = e.currentTarget.scrollTop)}>
           {!ready || !lessons || !index ? (
             <p className="fd-empty">Hämtar …</p>
           ) : showBook ? (
-            <FormulaBookView book={book} query={query} compact />
+            <FormulaBookView key={books?.current?.id} book={book} query={query} compact />
           ) : (
             <LessonRules lessons={lessons} index={index} subject={subject} query={query} />
           )}
