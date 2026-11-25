@@ -183,7 +183,7 @@ Välj AI och klistra in din egen nyckel under **Inställningar → AI**. Appen t
 Försök, statistik, det du skrivit på skrivytan, sparade uppgifter, genomgångar och dina API-nycklar (krypterade) synkas automatiskt mellan alla enheter där du är inloggad (Supabase-projektet **matte** i Stockholm). Inställningar, färger och TI-84-ROM stannar på varje enhet.
 
 - Allt sparas först lokalt, så appen fungerar utan nät. Synken körs vid inloggning, strax efter varje ändring, var 45:e sekund och när nätet kommer tillbaka.
-- Lösenordet lämnar aldrig enheten. Servern får en hemlighet som räknas fram ur det (med ett annat salt än boknyckeln), och varje konto når bara sin egen data. Tabellerna går inte att läsa direkt, bara via funktionerna `sync_pull` och `sync_push`.
+- Lösenordet lämnar aldrig enheten. Servern får en hemlighet som räknas fram ur det (med ett annat salt än boknyckeln), och varje konto når bara sin egen data. Tabellerna går inte att läsa direkt, bara via funktionerna `sync_pull_page` och `sync_push`.
 - Om två enheter ändrat samma sak vinner den senaste ändringen. Försök läggs alltid ihop, och klarade testfrågor slås ihop.
 - Loggar någon annan in i samma webbläsare rensas den förra personens lokala data först (den finns kvar på servern).
 - Status och **Synka nu** finns under **Inställningar → Data**.

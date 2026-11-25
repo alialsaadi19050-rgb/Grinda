@@ -1,7 +1,7 @@
 // Synkar framsteg mellan enheter via Supabase: försök, skrivytor, bokmärken och genomgångar.
 // Allt sparas först lokalt; synken hämtar och skickar i bakgrunden när det finns nät.
 //
-// Servern når bara funktionerna sync_pull och sync_push. De kontrollerar en hemlighet som
+// Servern når bara funktionerna sync_pull_page och sync_push. De kontrollerar en hemlighet som
 // härleds ur ditt lösenord i webbläsaren, så lösenordet lämnar aldrig enheten.
 import { useSyncExternalStore } from 'react'
 import { db, type Attempt } from '../storage/db.ts'
@@ -201,17 +201,26 @@ async function runOnce(c: SyncCreds) {
   setStatus({ kind: 'syncing' })
   const state = readState()
 
-  // 1. Hämta först, så att det som slås ihop lokalt också skickas tillbaka.
-  type Pull = { attempts: Attempt[]; docs: Doc[]; cursor: number; resetAt?: number }
+  // 1. Hämta först, så att det som slås ihop lokalt också skickas tillbaka. Servern skickar i
+  // lagom stora delar: en enhet som inte synkat på länge får annars allt i ett anrop som slår i
+  // serverns tidsgräns och misslyckas varje gång. Efter varje del sparas var vi är.
+  type Pull = { attempts: Attempt[]; docs: Doc[]; cursor: number; resetAt?: number; more?: boolean }
   // Lite marginal bakåt: att hämta något två gånger är ofarligt, att missa något är det inte.
-  const pulled = await rpc<Pull>('sync_pull', { p_user: c.user, p_secret: c.secret, p_since: Math.max(0, state.cursor - 200) })
-  // Har datan raderats från en annan enhet sedan förra synken? Rensa här också, och ladda inte upp något.
-  if ((pulled.resetAt ?? 0) > (state.resetAt ?? 0)) {
-    await wipeLocal()
-    writeState({ owner: c.user, cursor: 0, resetAt: pulled.resetAt })
-    return setStatus({ kind: 'ok', at: Date.now() })
+  let since = Math.max(0, state.cursor - 200)
+  for (;;) {
+    const pulled = await rpc<Pull>('sync_pull_page', { p_user: c.user, p_secret: c.secret, p_since: since })
+    // Har datan raderats från en annan enhet sedan förra synken? Rensa här också, och ladda inte upp något.
+    if ((pulled.resetAt ?? 0) > (state.resetAt ?? 0)) {
+      await wipeLocal()
+      writeState({ owner: c.user, cursor: 0, resetAt: pulled.resetAt })
+      return setStatus({ kind: 'ok', at: Date.now() })
+    }
+    await applyRemote(pulled.attempts, pulled.docs, c)
+    const now = readState()
+    writeState({ ...now, owner: c.user, cursor: Math.max(now.cursor, pulled.cursor), resetAt: Math.max(now.resetAt ?? 0, pulled.resetAt ?? 0) })
+    if (!pulled.more || pulled.cursor <= since) break
+    since = pulled.cursor
   }
-  await applyRemote(pulled.attempts, pulled.docs, c)
 
   // 2. Skicka det som ändrats här.
   const dirty = readDirty()
@@ -226,7 +235,6 @@ async function runOnce(c: SyncCreds) {
     clearDirty(dirty)
   }
 
-  writeState({ ...readState(), owner: c.user, cursor: Math.max(state.cursor, pulled.cursor), resetAt: Math.max(state.resetAt ?? 0, pulled.resetAt ?? 0) })
   setStatus({ kind: 'ok', at: Date.now() })
 }
 
