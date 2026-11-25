@@ -37,6 +37,12 @@ describe('provlistan', () => {
     for (const l of exam.lists) for (const n of parseList(l).keys()) expect(all.has(n)).toBe(false)
   })
 
+  it('egna A-uppgifter får ingen varning och hamnar inte i provmappen', () => {
+    expect(examStatus({ ...ex('2'), section: 'f2-a-uppgifter' })?.included).toBe('own')
+    expect(examStatus({ ...ex('201'), section: 'f2-a-uppgifter' })?.included).toBe('own')
+    expect(examStatus({ ...ex('201'), section: 'f2-ljud' })?.included).toBe('all')
+  })
+
   it('bryr sig inte om andra kapitel', () => {
     expect(examStatus(ex('1101', [null], 1))).toBeNull()
   })

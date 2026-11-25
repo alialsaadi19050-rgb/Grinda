@@ -377,17 +377,21 @@ export function ExercisePage({ id }: { id: string }) {
 }
 
 /** En liten varning när uppgiften inte ingår (eller bara delvis ingår) i provet, eller ett tips om den är en bra extraövning. */
-function ExamNote({ ex }: { ex: { id: string; chapter: number; number: string; parts: { label: string | null }[] } }) {
+function ExamNote({ ex }: { ex: { id: string; chapter: number; section?: string; number: string; parts: { label: string | null }[] } }) {
   const [hidden, setHidden] = useState<string | null>(null)
   const st = examStatus(ex)
   if (!st || st.included === 'all' || hidden === ex.id) return null
   const parts = st.included === 'some' ? st.parts : st.included === 'extra' ? (st.parts ?? []) : []
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} och ${parts.at(-1)}` : parts[0]
   return (
-    <div className={`ex-exam ${st.included}`} role="note">
-      <span aria-hidden="true">{st.included === 'extra' ? '★' : '⚠'}</span>
+    <div className={`ex-exam ${st.included === 'own' ? 'extra' : st.included}`} role="note">
+      <span aria-hidden="true">{st.included === 'extra' || st.included === 'own' ? '★' : '⚠'}</span>
       <span>
-        {st.included === 'extra' ? (
+        {st.included === 'own' ? (
+          <>
+            A-uppgift till <b>{st.exam.title}</b> – skriven efter lärarens lista, så allt den tränar ingår.
+          </>
+        ) : st.included === 'extra' ? (
           <>
             {st.best ? 'Extra värd att göra' : 'Bra extraövning'} till <b>{st.exam.title}</b> – liknar bokens provuppgifter
             {parts.length ? ` (bara ${parts.length > 1 ? 'deluppgifterna' : 'deluppgift'} ${list})` : ''}.
