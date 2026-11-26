@@ -2,7 +2,7 @@
 
 **https://alialsaadi19050-rgb.github.io/Grinda/**
 
-En egen övningsapp för Matte 5 och Fysik 2. Du bläddrar bland uppgifterna, räknar för hand på en canvas med ritplattan (Gaomon S620), skriver in svaret och får rättning direkt.
+En egen övningsapp för Matte 4, Matte 5 och Fysik 2. Du bläddrar bland uppgifterna, räknar för hand på en canvas med ritplattan (Gaomon S620), skriver in svaret och får rättning direkt.
 
 Innehållet är avskrivet från din egen bok för eget bruk. Det publiceras bara krypterat, bakom inloggning (se nedan).
 

@@ -61,6 +61,8 @@ export function inputKind(a: Answer): { mode: 'math' | 'text' | 'buttons' | 'sel
       return { mode: 'text', symbols: ['∩', '∪', '\\', '∁', '(', ')', '∅'], placeholder: 't.ex. A ∩ (B ∪ C)' }
     case 'list':
       return { mode: 'math', placeholder: 'Skilj talen åt med kommatecken eller mellanslag' }
+    case 'periodic':
+      return { mode: 'math', placeholder: a.unit === 'deg' ? 't.ex. x = 30° + n·360° eller x = 150° + n·360°' : 't.ex. x = π/6 + n·2π eller x = 5π/6 + n·2π' }
     default:
       return { mode: 'math' }
   }

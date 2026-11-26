@@ -24,7 +24,7 @@ import { recommend, useProgress, type Progress, type Status } from '../progress/
 import './library.css'
 import './stigen-home.css'
 
-/** Bokens innehåll. Som standard bara det valda ämnets kapitel (Fysik 2 eller Matte 5). */
+/** Bokens innehåll. Som standard bara det valda ämnets kapitel (Fysik 2, Matte 4 eller Matte 5). */
 export function useContent(scope: 'subject' | 'all' = 'subject') {
   const [content, setContent] = useState<Content | null>(null)
   const subject = useSubject()
@@ -123,7 +123,7 @@ export type { NavPage }
 export function Nav(props: { streak: number; onSettings: () => void; active: NavPage }) {
   const subject = useSubject()
   const content = useContent()
-  const firstChapter = content?.index.chapters[0]?.id ?? (subject === 'fysik' ? 102 : 1)
+  const firstChapter = content?.index.chapters[0]?.id ?? (subject === 'fysik' ? 102 : subject === 'matte4' ? 402 : 1)
   return <NavBar {...props} firstChapter={firstChapter} />
 }
 

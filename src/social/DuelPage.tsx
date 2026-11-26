@@ -6,7 +6,7 @@ import { ChevronLeft } from '../design/icons.tsx'
 import { AnswerPanel } from '../exercise/AnswerPanel.tsx'
 import { useAllContent } from '../game/useGame.ts'
 import { db, resolveOverrides, startRedo } from '../storage/db.ts'
-import { setSubject } from '../subject/subject.ts'
+import { setSubject, subjectName } from '../subject/subject.ts'
 import { Figures } from '../ui/Figure.tsx'
 import { MathText } from '../ui/MathText.tsx'
 import { fetchDuel, myId, refreshInbox, send, submitDuel, type Duel } from './api.ts'
@@ -160,7 +160,7 @@ export function DuelPage({ id }: { id: string }) {
               Du mot {names[other] ?? 'en kompis'}
             </h1>
             <p className="so-help">
-              {exercises.length} uppgifter i {duel.subject === 'fysik' ? 'Fysik 2' : 'Matte 5'}. Du får en poäng för varje deluppgift som blir rätt på första försöket. Klockan startar när du trycker Starta och stannar när du är klar – vid lika poäng vinner den
+              {exercises.length} uppgifter i {subjectName(duel.subject)}. Du får en poäng för varje deluppgift som blir rätt på första försöket. Klockan startar när du trycker Starta och stannar när du är klar – vid lika poäng vinner den
               som var snabbast. {theirs ? `${names[other] ?? 'Motståndaren'} har redan spelat.` : ''}
             </p>
             <button

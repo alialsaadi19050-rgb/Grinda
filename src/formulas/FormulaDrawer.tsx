@@ -81,7 +81,7 @@ export function FormulaDrawer({ chapter, onClose }: { topic?: string; chapter: n
 
   const subject = useMemo<Subject>(() => {
     const c = index?.chapters.find((x) => x.id === chapter)
-    return c ? subjectOf(c) : chapter === 102 ? 'fysik' : 'matte'
+    return c ? subjectOf(c) : chapter === 102 ? 'fysik' : chapter === 402 ? 'matte4' : 'matte'
   }, [index, chapter])
   const showBook = subject === 'fysik' && !!book
   const ready = !!books && !!lessons && !!index

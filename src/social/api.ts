@@ -95,7 +95,7 @@ export interface Duel {
   id: string
   created_by: string
   opponent: string
-  subject: 'matte' | 'fysik'
+  subject: 'matte' | 'matte4' | 'fysik'
   exercises: string[]
   results: Record<string, DuelResult>
   created_at: string

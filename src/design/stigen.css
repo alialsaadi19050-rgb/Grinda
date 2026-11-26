@@ -729,6 +729,10 @@ h3 {
   background: linear-gradient(135deg, var(--mint), color-mix(in srgb, var(--mint) 55%, var(--sky)));
   box-shadow: 0 8px 0 var(--mint-deep);
 }
+:root .sp-matte4 {
+  background: linear-gradient(135deg, var(--coral), color-mix(in srgb, var(--coral) 55%, var(--sun)));
+  box-shadow: 0 8px 0 var(--coral-deep);
+}
 :root .sp-card > .sp-art {
   position: absolute;
   inset: 18px 18px auto auto;

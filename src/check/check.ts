@@ -2,7 +2,7 @@
 // enheter som ”sätt”), men noga med matematiken. Ger ett konkret tips när svaret
 // nästan är rätt.
 import type { MathNode } from 'mathjs'
-import type { Answer, ChoiceAnswer, ExpressionAnswer, InequalityAnswer, ListAnswer, NumberAnswer, SetAnswer, SetExpressionAnswer } from '../content/types.ts'
+import type { Answer, ChoiceAnswer, ExpressionAnswer, InequalityAnswer, ListAnswer, NumberAnswer, PeriodicAnswer, SetAnswer, SetExpressionAnswer } from '../content/types.ts'
 import { evalLog10, evalNumber, math, precisionOf, roundsTo } from '../math/expr.ts'
 import { compareSetExprs, evalSet, parseSetExpr, regions } from '../math/sets.ts'
 import { parseUnit, prettyUnit, sameDimension, splitQuantity } from './units.ts'
@@ -48,13 +48,75 @@ export function tidy(raw: string): string {
 /** Tar bort mellanslag mellan tusental: 26 098 → 26098, 1 200 000 → 1200000. */
 const joinThousands = (s: string) => s.replace(/(\d)[ ](?=\d{3}(?!\d))/g, '$1')
 
-const FUNCTION_NAMES = ['sqrt', 'nthRoot', 'binom', 'combinations', 'permutations', 'factorial', 'pi', 'exp', 'log', 'ln', 'abs', 'Infinity']
+const TRIG = ['asin', 'acos', 'atan', 'sin', 'cos', 'tan']
+const FUNCTION_NAMES = ['sqrt', 'nthRoot', 'binom', 'combinations', 'permutations', 'factorial', 'pi', 'exp', 'log', 'ln', 'abs', 'Infinity', ...TRIG]
+
+/** Index för parentesen som stänger den som öppnas vid `open`. */
+function closingParen(s: string, open: number): number {
+  let depth = 0
+  for (let i = open; i < s.length; i++) {
+    if (s[i] === '(') depth++
+    else if (s[i] === ')' && --depth === 0) return i
+  }
+  return s.length
+}
+
+/**
+ * Skriver trigonometriska funktioner som mathjs vill ha dem: sin x → sin(x), cos5x → cos(5x),
+ * sin^2 x → (sin(x))^2, 2sin(x)cos(x) → 2*sin(x)*cos(x). Argumentet utan parentes är ett tal,
+ * π och en variabel, som man skriver i boken (sin 0,5x, cos 2πt).
+ */
+export function normalizeTrig(s: string, variables: string[]): string {
+  if (!/(?:sin|cos|tan)/.test(s)) return s
+  const v = variables.filter((x) => /^[a-zA-Z]$/.test(x)).join('')
+  const bare = new RegExp(`^(\\d+(?:\\.\\d+)?)?\\s*\\*?\\s*(pi)?\\s*\\*?\\s*(${v ? `[${v}]+` : '(?!)'})?`)
+  let out = ''
+  let i = 0
+  while (i < s.length) {
+    const fn = TRIG.find((f) => s.startsWith(f, i))
+    if (!fn) {
+      out += s[i++]
+      continue
+    }
+    i += fn.length
+    let pow = ''
+    const p = /^\s*\^\s*(?:\((\d+)\)|(\d+))/.exec(s.slice(i))
+    if (p) {
+      pow = p[1] ?? p[2]
+      i += p[0].length
+    }
+    while (s[i] === ' ') i++
+    let arg: string
+    if (s[i] === '(') {
+      const j = closingParen(s, i)
+      arg = s.slice(i + 1, j)
+      i = j + 1
+    } else {
+      const m = bare.exec(s.slice(i))
+      if (!m || !m[0].trim()) {
+        out += fn
+        continue
+      }
+      arg = m[0].trim().replace(/^\*\s*/, '')
+      i += m[0].length
+    }
+    if (/[\d.a-zA-Z)]\s*$/.test(out)) out = out.trimEnd() + '*'
+    const call = `${fn}(${normalizeTrig(arg, variables)})`
+    out += pow ? `(${call})^${pow}` : call
+    // Det som följer direkt efter en funktion multipliceras: sin(x)cos(x), cos(x)2.
+    if (/^\s*[\d(a-zA-Z]/.test(s.slice(i)) && !/^\s*(?:eller|och)\b/.test(s.slice(i))) out += '*'
+  }
+  return out
+}
 
 /**
  * Gör multiplikation tydlig för mathjs: 3x^2y → 3x^2*y, n(n-1) → n*(n-1),
  * (n-1)!(n-1) → (n-1)!*(n-1).
  */
 export function explicitMultiplication(s: string, variables: string[]): string {
+  // π intill en variabel: 2πx → 2pi*x, nπ → n*pi.
+  const single = variables.filter((x) => /^[a-zA-Z]$/.test(x)).join('')
+  if (single) s = s.replace(new RegExp(`pi(?=[${single}])`, 'g'), 'pi*').replace(new RegExp(`(?<![a-zA-Z])([${single}])(?=pi)`, 'g'), '$1*')
   let out = ''
   let i = 0
   while (i < s.length) {
@@ -79,7 +141,7 @@ export function explicitMultiplication(s: string, variables: string[]): string {
   }
   // Variabel eller ) eller ! eller siffra direkt före ( eller en variabel.
   const v = variables.join('')
-  if (v) out = out.replace(new RegExp(`([${v}])\\s*\\(`, 'g'), '$1*(')
+  if (v) out = out.replace(new RegExp(`(?<![a-zA-Z])([${v}])\\s*\\(`, 'g'), '$1*(')
   return out
     .replace(/\)\s*\(/g, ')*(')
     .replace(/!\s*(?=[(\w])/g, '!*')
@@ -111,8 +173,10 @@ export function parseNumber(raw: string, noun?: string, variable?: string): Pars
   let s = tidy(raw).replace(/\.$/, '')
   s = s.replace(/^(?:≈|ca\.?|cirka)\s*/i, '')
   // ”x = 26 098” → ”26 098”
-  const v = variable ? new RegExp(`^${variable}\\s*=\\s*`) : /^[a-zA-Z]\s*=\s*/
+  const v = variable ? new RegExp(`^${variable}\\s*=\\s*`) : /^[a-zA-Z][a-zA-Z0-9_₀-₉]*\s*=\s*/
   s = s.replace(v, '').replace(/^=\s*/, '')
+  // Grader: 21,0° är talet 21,0 (och 0,3 °C är 0,3).
+  s = s.replace(/\s*°\s*C?(?![a-zA-Z])/g, '').replace(/\s*°/g, '')
   // Ord efter talet, t.ex. ”sätt”, ”cyklar”, ”st”.
   for (let k = 0; k < 3; k++) {
     const t = s.replace(/\s*[a-zA-ZåäöÅÄÖ]{2,}\.?$/u, (w) => (FUNCTION_NAMES.some((f) => w.trim().startsWith(f)) ? w : ''))
@@ -126,7 +190,7 @@ export function parseNumber(raw: string, noun?: string, variable?: string): Pars
   // Decimalkomma, men inte kommatecknet mellan argumenten i C(10,3).
   s = joinThousands(s).replace(/(\d),(\d)/g, (m, a: string, b: string, i: number, all: string) => (/[A-Za-z]\s*\([^)]*$/.test(all.slice(0, i)) ? m : `${a}.${b}`))
   if (!s) return { error: 'Skriv ett tal.' }
-  const withoutKnown = s.replace(/(\d)e([+-]?\d)/gi, '$1$2').replace(/\b(?:sqrt|nthRoot|binom|C|P|pi|combinations|permutations)\b/g, '')
+  const withoutKnown = s.replace(/(\d)e([+-]?\d)/gi, '$1$2').replace(/\b(?:sqrt|nthRoot|binom|C|P|pi|combinations|permutations|a?sin|a?cos|a?tan)\b/g, '')
   if (/[a-zA-ZåäöÅÄÖ]/.test(withoutKnown)) {
     return { error: 'Svaret ska vara ett tal.' }
   }
@@ -331,7 +395,7 @@ function parseExpr(raw: string, variables: string[], lift = true): MathNode | { 
   if (lift) s = liftStuckExponents(s, variables)
   if (s.includes('=')) s = s.slice(s.lastIndexOf('=') + 1)
   s = joinThousands(s).replace(/(\d),(\d)/g, '$1.$2')
-  s = combinatorics(explicitMultiplication(s, variables))
+  s = combinatorics(explicitMultiplication(normalizeTrig(s, variables), variables))
   if (!s.trim()) return { error: 'Skriv ett uttryck.' }
   try {
     const node = math.parse(s)
@@ -351,25 +415,33 @@ function parseExpr(raw: string, variables: string[], lift = true): MathNode | { 
   }
 }
 
-function equivalent(a: MathNode, b: MathNode, variables: string[], integers: boolean): boolean {
+/** sin, cos och tan i grader, för uttryck som y = sin(x + 60°). */
+const DEGREES: Record<string, (v: number) => number> = {
+  sin: (v) => Math.sin((v * Math.PI) / 180),
+  cos: (v) => Math.cos((v * Math.PI) / 180),
+  tan: (v) => Math.tan((v * Math.PI) / 180),
+}
+
+function equivalent(a: MathNode, b: MathNode, variables: string[], integers: boolean, degrees = false): boolean {
   const fa = a.compile()
   const fb = b.compile()
+  const extra = degrees ? DEGREES : {}
   for (const p of samplePoints(variables, integers)) {
-    const x = Number(fa.evaluate({ ...p }))
-    const y = Number(fb.evaluate({ ...p }))
+    const x = Number(fa.evaluate({ ...p, ...extra }))
+    const y = Number(fb.evaluate({ ...p, ...extra }))
     if (!Number.isFinite(x) || !Number.isFinite(y) || !near(x, y, 1e-7)) return false
   }
   return true
 }
 
 export function checkExpression(a: ExpressionAnswer, raw: string): CheckResult {
-  const user = parseExpr(raw, a.variables, !hasVarExponent(a.value))
+  const user = parseExpr(a.degrees ? raw.replace(/°/g, '') : raw, a.variables, !hasVarExponent(a.value))
   if ('error' in user) return invalid(user.error)
   const target = math.parse(combinatorics(explicitMultiplication(a.value, a.variables)))
   const integers = a.value.includes('!') || raw.includes('!')
-  if (!equivalent(user, target, a.variables, integers)) {
+  if (!equivalent(user, target, a.variables, integers, a.degrees)) {
     const negated = math.parse(`-(${target.toString()})`)
-    if (equivalent(user, negated, a.variables, integers)) return wrong('Kolla tecknen – ditt uttryck är facits med omvänt tecken.')
+    if (equivalent(user, negated, a.variables, integers, a.degrees)) return wrong('Kolla tecknen – ditt uttryck är facits med omvänt tecken.')
     return wrong('Pröva att sätta in ett tal för ' + a.variables[0] + ' i både ditt uttryck och det ursprungliga och jämför.')
   }
   if (a.form === 'expanded' && !isExpanded(user)) return partial('Rätt värde!', 'Men uppgiften vill att du utvecklar uttrycket – inga parenteser kvar.')
@@ -585,6 +657,110 @@ export function checkChoice(a: ChoiceAnswer, raw: string): CheckResult {
   return chosen === a.value ? ok() : wrong()
 }
 
+/* ---------- Trigonometriska ekvationer: x = v + n·p ---------- */
+
+/** En lösningsfamilj start + n·period (period 0 = en enda lösning). */
+interface Family {
+  start: number
+  period: number
+}
+
+/** Läser ”x = 30° + n·360° eller x = 150° + n·360°”, ”x = ±1,07 + nπ”, ”x = n·180°” … */
+export function parseFamilies(raw: string): Family[] | { error: string } {
+  let s = tidy(raw).replace(/\.$/, '').replace(/≈/g, '=').replace(/\s*°/g, '').replace(/\brad(?:ianer)?\b/g, '').replace(/\+\s*-|\+\/-/g, '±')
+  const pieces = s
+    .split(/\s*(?:\beller\b|\boch\b|;|\n)\s*|,\s+|,(?=\s*[a-zA-Z][\w₀-₉]*\s*=)/i)
+    .map((p) => p.trim())
+    .filter(Boolean)
+  const out: Family[] = []
+  for (let piece of pieces) {
+    piece = piece.replace(/^[a-zA-Z][\w₀-₉]*\s*=\s*/, '').replace(/^=\s*/, '')
+    piece = joinThousands(piece).replace(/(\d),(\d)/g, '$1.$2').replace(/\bk\b/g, 'n')
+    // n360, n2π och n(…) betyder n gånger.
+    piece = piece.replace(/(?<![a-zA-Z])n(?=\s*[\d(])/g, 'n*')
+    if (!piece) continue
+    const variants = piece.includes('±') ? [piece.replace('±', '+'), piece.replace('±', '-')] : [piece]
+    for (const v of variants) {
+      try {
+        const f = math.parse(explicitMultiplication(v, ['n'])).compile()
+        const at = (n: number) => Number(f.evaluate({ n }))
+        const a = at(0)
+        const p = at(1) - a
+        if (![a, p].every(Number.isFinite) || Math.abs(at(2) - a - 2 * p) > 1e-9 * Math.max(1, Math.abs(p))) throw new Error()
+        out.push({ start: a, period: Math.abs(p) })
+      } catch {
+        return { error: `Jag kan inte läsa ”${piece}”. Skriv t.ex. x = 30° + n·360° eller x = 150° + n·360°.` }
+      }
+    }
+  }
+  if (!out.length) return { error: 'Skriv lösningarna, t.ex. x = 30° + n·360° eller x = 150° + n·360°.' }
+  return out
+}
+
+/** Alla lösningar i [0, w) för en familj. */
+function pointsIn(f: Family, w: number): number[] {
+  const mod = (x: number) => ((x % w) + w) % w
+  if (!f.period) return [mod(f.start)]
+  const n = Math.round(w / f.period)
+  return Array.from({ length: n }, (_, k) => mod(f.start + k * f.period))
+}
+
+export function checkPeriodic(a: PeriodicAnswer, raw: string): CheckResult {
+  const res = checkPeriodicIn(a, raw)
+  if (res.status === 'correct' || !a.anyUnit) return res
+  // Uppgiften säger inte grader eller radianer: båda godkänns.
+  const k = a.unit === 'deg' ? 'pi/180' : '180/pi'
+  const other: PeriodicAnswer = { ...a, anyUnit: false, tol: undefined, unit: a.unit === 'deg' ? 'rad' : 'deg', values: a.values.map((v) => `(${v})*${k}`), period: `(${a.period})*${k}` }
+  const alt = checkPeriodicIn(other, raw)
+  return alt.status === 'correct' ? alt : res
+}
+
+function checkPeriodicIn(a: PeriodicAnswer, raw: string): CheckResult {
+  const fams = parseFamilies(raw)
+  if ('error' in fams) return invalid(fams.error)
+  const period = evalNumber(a.period)
+  const tol = a.tol ?? (a.unit === 'deg' ? 0.06 : 0.006)
+  const plain = tidy(raw)
+  const wrongUnit =
+    a.unit === 'deg' && /pi/.test(plain)
+      ? 'Svara i grader – uppgiften räknar med grader (360° är ett varv).'
+      : a.unit === 'rad' && fams.some((f) => [90, 180, 360].some((d) => Math.abs(f.period - d) < 1e-9))
+        ? 'Svara i radianer – ett varv är 2π, inte 360°.'
+        : undefined
+  const singles = fams.filter((f) => !f.period)
+  // Ett fönster som rymmer ett helt antal perioder av både facit och svaret.
+  // Avrundade perioder (n·6,28 i stället för n·2π) räknas som den exakta perioden.
+  const fits = (k: number, f: Family) => {
+    const r = (k * period) / f.period
+    return Math.round(r) >= 1 && Math.abs(r - Math.round(r)) < 0.005 * Math.max(1, r)
+  }
+  let m = 0
+  for (let k = 1; k <= 24 && !m; k++) {
+    if (fams.every((f) => !f.period || fits(k, f))) m = k
+  }
+  if (!m) return wrong(wrongUnit ?? 'Perioden stämmer inte. Vilken period har funktionen i ekvationen?')
+  const w = m * period
+  for (const f of fams) if (f.period) f.period = w / Math.round(w / f.period)
+  const close = (x: number, y: number, t = tol) => Math.min(Math.abs(x - y), w - Math.abs(x - y)) <= t
+  const uniq = (xs: number[]) => xs.filter((x, i) => xs.findIndex((y) => close(x, y, 1e-7)) === i)
+  const expected = uniq(a.values.flatMap((v) => pointsIn({ start: evalNumber(v), period }, w)))
+  const given = uniq(fams.filter((f) => f.period).flatMap((f) => pointsIn(f, w)))
+  const solves = (x: number) => expected.some((e) => close(e, x))
+  if (singles.length && !given.length) {
+    if (singles.every((f) => solves(f.start))) return partial('Rätt lösning, men inte alla.', 'Ange hela lösningsmängden med perioden, t.ex. x = 30° + n·360°.')
+    return wrong(wrongUnit)
+  }
+  const missing = expected.filter((e) => !given.some((g) => close(e, g)))
+  const extra = given.filter((g) => !solves(g))
+  if (!missing.length && !extra.length && singles.every((f) => solves(f.start))) return ok()
+  if (wrongUnit) return wrong(wrongUnit)
+  if (!extra.length) return wrong('Det du skrivit stämmer, men det finns fler lösningar. Glöm inte den andra lösningen (t.ex. 180° − v för sinus och −v för cosinus).')
+  const near = extra.every((g) => expected.some((e) => close(e, g, tol * 20)))
+  if (near) return wrong('Nära! Kontrollera avrundningen eller räkna med fler decimaler.')
+  if (!missing.length) return wrong('Några av dina lösningar stämmer inte.')
+  return wrong()
+}
+
 /* ---------- Ingången ---------- */
 
 export function checkAnswer(a: Answer, raw: string): CheckResult {
@@ -604,6 +780,8 @@ export function checkAnswer(a: Answer, raw: string): CheckResult {
       return checkSetExpression(a, raw)
     case 'choice':
       return checkChoice(a, raw)
+    case 'periodic':
+      return checkPeriodic(a, raw)
     case 'self':
       return invalid('Den här uppgiften jämför du själv med facit.')
   }

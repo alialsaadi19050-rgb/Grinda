@@ -12,7 +12,29 @@ export type Answer =
   | SetAnswer
   | SetExpressionAnswer
   | ChoiceAnswer
+  | PeriodicAnswer
   | SelfAnswer
+
+/**
+ * Fullständig lösning till en trigonometrisk ekvation, t.ex. x = 30° + n·360° eller
+ * x = 150° + n·360°. Alla skrivsätt för samma lösningsmängd godkänns (x = 90° + n·180°
+ * är samma som 90° + n·360° och 270° + n·360°).
+ */
+export interface PeriodicAnswer {
+  type: 'periodic'
+  /** Lösningarnas startvärden i mathjs-syntax, t.ex. ["30", "150"] eller ["asin(0.93)", "pi - asin(0.93)"]. */
+  values: string[]
+  /** Perioden som läggs till, t.ex. "360" eller "2*pi". */
+  period: string
+  /** Grader eller radianer. */
+  unit: 'deg' | 'rad'
+  /** Variabeln, standard x. */
+  variable?: string
+  /** Tillåten avvikelse för avrundade svar. Standard 0,06 (grader) eller 0,006 (radianer). */
+  tol?: number
+  /** Uppgiften säger inte om svaret ska vara i grader eller radianer – båda godkänns. */
+  anyUnit?: boolean
+}
 
 export interface NumberAnswer {
   type: 'number'
@@ -44,6 +66,8 @@ export interface ExpressionAnswer {
   variables: string[]
   /** Krav på formen: utvecklat, faktoriserat, primtalsfaktorer eller valfritt. */
   form?: 'any' | 'expanded' | 'factored' | 'prime-factors'
+  /** Vinklarna är i grader, t.ex. y = sin(x + 60°): sin, cos och tan räknas i grader. */
+  degrees?: boolean
 }
 
 export interface ListAnswer {
@@ -189,8 +213,8 @@ export interface ContentIndex {
     title: string
     /** Visas i stället för ”Kapitel {id}”, t.ex. ”Fysik 2 · kapitel 2”. */
     label?: string
-    /** Ämne: 'matte' (standard) eller 'fysik'. Startsidan delar upp kapitlen efter ämne. */
-    subject?: 'matte' | 'fysik'
+    /** Ämne: 'matte' (Matte 5, standard), 'matte4' eller 'fysik'. Startsidan delar upp kapitlen efter ämne. */
+    subject?: 'matte' | 'matte4' | 'fysik'
     /** Kapitlet har inga sidbilder (då varnar inte npm run ingest). */
     noPageImages?: boolean
     sections: { id: string; title: string; file: string }[]

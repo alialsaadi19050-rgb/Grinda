@@ -31,6 +31,8 @@ export function describeAnswer(a: Answer): { kind: string; detail: string } {
       }
     case 'choice':
       return { kind: 'Val', detail: `${a.options.join(' / ')} → ${a.value}` }
+    case 'periodic':
+      return { kind: a.unit === 'deg' ? 'Lösningar i grader' : 'Lösningar i radianer', detail: `${a.variable ?? 'x'} = ${a.values.join(' eller ')} + n·${a.period}` }
     case 'self':
       return { kind: 'Självbedöms', detail: 'Du jämför med facit och markerar rätt eller fel.' }
   }

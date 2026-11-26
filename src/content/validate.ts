@@ -11,7 +11,7 @@ export interface Issue {
   message: string
 }
 
-const ANSWER_TYPES = ['number', 'expression', 'list', 'inequality', 'set', 'set-expression', 'choice', 'self']
+const ANSWER_TYPES = ['number', 'expression', 'list', 'inequality', 'set', 'set-expression', 'choice', 'periodic', 'self']
 
 export function validateExercise(ex: Exercise, opts: { figureExists?: (src: string) => boolean } = {}): Issue[] {
   const issues: Issue[] = []
@@ -120,6 +120,11 @@ export function checkAnswer(a: Answer): string[] {
       }
       case 'choice':
         if (!a.options.includes(a.value)) out.push(`rätt alternativ ”${a.value}” finns inte bland alternativen`)
+        break
+      case 'periodic':
+        if (!(evalNumber(a.period) > 0)) out.push(`perioden ”${a.period}” går inte att räkna ut`)
+        for (const v of a.values) if (!Number.isFinite(evalNumber(v))) out.push(`startvärdet ”${v}” går inte att räkna ut`)
+        if (!['deg', 'rad'].includes(a.unit)) out.push(`okänd vinkelenhet ”${a.unit}”`)
         break
       case 'self':
         break

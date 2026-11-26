@@ -5,7 +5,7 @@ import { Send } from '../design/icons.tsx'
 import { useGame } from '../game/useGame.ts'
 import { exerciseHref, Nav, useContent } from '../library/Library.tsx'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
-import { subjectOf, useSubject } from '../subject/subject.ts'
+import { subjectName, subjectOf, useSubject } from '../subject/subject.ts'
 import { MathText } from '../ui/MathText.tsx'
 import { createDuel, fetchBoard, setHidden, fetchDuels, fetchImage, join, leave, myId, readThread, refreshInbox, resetInbox, search, send, useInbox, type Duel, type Friend, type Message } from './api.ts'
 import '../practice/practice.css'
@@ -385,7 +385,7 @@ function Thread({ who, name }: { who: string; name?: string }) {
         </a>
         <span className="so-avatar">{(name ?? '?').slice(0, 1).toUpperCase()}</span>
         <strong>{name ?? 'Kompis'}</strong>
-        <button className="so-small-btn" onClick={challenge} title={`5 slumpade uppgifter i ${subject === 'fysik' ? 'Fysik 2' : 'Matte 5'}. Flest rätt på första försöket vinner, tiden avgör vid lika.`}>
+        <button className="so-small-btn" onClick={challenge} title={`5 slumpade uppgifter i ${subjectName(subject)}. Flest rätt på första försöket vinner, tiden avgör vid lika.`}>
           ⚔️ Utmana till duell
         </button>
       </header>
@@ -501,7 +501,7 @@ function Duels({ board }: { board: Friend[] | null }) {
                   <span className="pr-item-text">
                     <strong>Mot {names.get(other) ?? 'okänd'}</strong>
                     <span>
-                      {d.subject === 'fysik' ? 'Fysik 2' : 'Matte 5'} · {time(d.created_at)}
+                      {subjectName(d.subject)} · {time(d.created_at)}
                       {mineR && theirs ? ` · ${mineR.score}–${theirs.score}` : ''}
                     </span>
                   </span>

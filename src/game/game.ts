@@ -216,7 +216,7 @@ export function computeGame({ index, exercises, attempts, lessonsDone, lessonCou
     badge('goal-7', '🌟', 'Sju mål', 'Nå ditt dagliga mål sju dagar.', goalDays, 7),
     badge('lessons-5', '📖', 'Bokmal', 'Gör klart fem genomgångar.', doneLessons.length, 5),
     badge('lessons-all', '🎓', 'Alla genomgångar', 'Gör klart alla genomgångar.', lessonCount ? doneLessons.length : 0, Math.max(1, lessonCount)),
-    badge('both', '⚛️', 'Dubbelämnad', 'Lös uppgifter i både Fysik 2 och Matte 5.', subjects.size, 2),
+    badge('both', '⚛️', 'Dubbelämnad', 'Lös uppgifter i två olika ämnen, t.ex. Fysik 2 och Matte 4.', subjects.size, 2),
     badge('new-numbers', '🎲', 'Nya siffror', 'Lös tio uppgifter med nya siffror.', generated, 10),
     badge('night', '🦉', 'Nattugglan', 'Svara rätt mellan midnatt och klockan fem.', night ? 1 : 0, 1),
     badge('early', '🐓', 'Morgonpigg', 'Svara rätt mellan klockan fem och sju på morgonen.', early ? 1 : 0, 1),

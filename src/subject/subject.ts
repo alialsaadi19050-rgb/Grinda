@@ -1,20 +1,22 @@
-// Vilket ämne du pluggar just nu: Fysik 2 eller Matte 5. Startsidan låter dig välja, och
+// Vilket ämne du pluggar just nu: Fysik 2, Matte 4 eller Matte 5. Startsidan låter dig välja, och
 // resten av appen (hem, kapitel, Lär dig, statistik) visar bara det ämnets innehåll.
 import { useSyncExternalStore } from 'react'
 import type { Content } from '../content/load.ts'
 import type { ContentIndex } from '../content/types.ts'
 
-export type Subject = 'matte' | 'fysik'
+export type Subject = 'matte' | 'matte4' | 'fysik'
 
 export const SUBJECTS: { id: Subject; name: string }[] = [
   { id: 'fysik', name: 'Fysik 2' },
+  { id: 'matte4', name: 'Matte 4' },
   { id: 'matte', name: 'Matte 5' },
 ]
 
 const KEY = 'grinda.subject'
 const read = (): Subject => {
   try {
-    return localStorage.getItem(KEY) === 'fysik' ? 'fysik' : 'matte'
+    const v = localStorage.getItem(KEY)
+    return v === 'fysik' || v === 'matte4' ? v : 'matte'
   } catch {
     return 'matte'
   }

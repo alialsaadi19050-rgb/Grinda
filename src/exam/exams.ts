@@ -55,6 +55,22 @@ export const EXAMS: Exam[] = [
     },
     ownSections: ['f2-a-uppgifter'],
   },
+  {
+    // Matte 4, kapitel 2 – enligt planeringen (vecka 39–49), prov onsdag 2/12.
+    id: 'matte4-prov2',
+    title: 'prov 2',
+    chapter: 402,
+    lists: [
+      '2102-2115, 2117-2124, 2126-2140, 2143-2152, 2155-2189',
+      '2204-2233',
+      '2303-2337',
+      '2402-2422',
+      // Diagnos 2 och blandade övningar (s. 91–97)
+      '1-32',
+    ],
+    pages: 's. 52–76, 78–84, diagnos s. 91, 92–97 (prov 2/12)',
+    lessons: {},
+  },
 ]
 
 /** Uppgiftsnummer → vilka deluppgifter som ingår (null = hela uppgiften). */
