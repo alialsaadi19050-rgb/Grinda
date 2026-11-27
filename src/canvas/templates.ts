@@ -53,11 +53,6 @@ export function templatePieces(kind: TemplateKind): Piece[] {
     for (const t of [-R, R]) {
       out.push(line([t, -tick], [t, tick], { thin: true }), line([-tick, t], [tick, t], { thin: true }))
     }
-    // Vinklarna 30°, 45° och 60° i alla kvadranter, tunt och blått.
-    for (const deg of [30, 45, 60, 120, 135, 150, 210, 225, 240, 300, 315, 330]) {
-      const r = (deg * Math.PI) / 180
-      out.push(line([0, 0], [R * Math.cos(r), -R * Math.sin(r)], { color: 'blue', thin: true }))
-    }
     return out
   }
   // Tabell: 3 kolumner × 6 rader, rubrikraden lite tjockare under.
