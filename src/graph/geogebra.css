@@ -1,0 +1,95 @@
+.ggb-win {
+  position: fixed;
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  color: var(--text);
+  background: rgba(var(--scrim-rgb), 0.92);
+  backdrop-filter: blur(22px) saturate(1.3);
+  box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), 0.12), 0 30px 70px -20px rgb(0 0 0 / calc(0.75 * var(--shadow-k)));
+  animation: calc-in 0.25s var(--ease-out);
+}
+.ggb-win[hidden] {
+  display: none;
+}
+.ggb-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 8px 16px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.ggb-head:active {
+  cursor: grabbing;
+}
+.ggb-head b {
+  font-size: 14px;
+  flex: none;
+}
+.ggb-tip {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+.ggb-tip code {
+  padding: 0 4px;
+  border-radius: 5px;
+  background: rgba(var(--fg-rgb), 0.09);
+  color: var(--text);
+  font-size: 11.5px;
+}
+.ggb-btn {
+  flex: none;
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(var(--fg-rgb), 0.08);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.ggb-btn:hover:not(:disabled) {
+  background: rgba(var(--fg-rgb), 0.14);
+}
+.ggb-head .calc-close {
+  flex: none;
+}
+.ggb-body {
+  flex: 1;
+  min-height: 0;
+  margin: 0 10px 10px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+.ggb-body iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+/* Iframen får inte svälja musen medan fönstret flyttas eller ändrar storlek. */
+.ggb-win.moving iframe {
+  pointer-events: none;
+}
+.ggb-resize {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  touch-action: none;
+  border-bottom-right-radius: 18px;
+  background: linear-gradient(135deg, transparent 55%, rgba(var(--fg-rgb), 0.35) 55% 62%, transparent 62% 72%, rgba(var(--fg-rgb), 0.35) 72% 79%, transparent 79%);
+}
+@media (max-width: 640px) {
+  .ggb-tip {
+    display: none;
+  }
+}

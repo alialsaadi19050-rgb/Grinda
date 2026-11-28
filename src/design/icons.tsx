@@ -137,6 +137,12 @@ export const CalculatorIcon = (p: P) => (
     <path d="M8.5 13h.01M12 13h.01M15.5 13h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01" strokeWidth="2.6" />
   </svg>
 )
+export const GraphIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 3.5v16.5h16.5" />
+    <path d="M6.5 15.5c2-6.5 4.2-8.5 6.2-4.6s4.2 2.4 6.8-5.4" />
+  </svg>
+)
 export const Sparkle = (p: P) => (
   <svg {...base(p)}>
     <path d="M12 3.5c.5 4.2 2.3 6 6.5 6.5-4.2.5-6 2.3-6.5 6.5-.5-4.2-2.3-6-6.5-6.5 4.2-.5 6-2.3 6.5-6.5Z" fill="currentColor" stroke="none" />

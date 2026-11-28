@@ -21,6 +21,7 @@ export type ActionId =
   | 'next'
   | 'prev'
   | 'calculator'
+  | 'graph'
   | 'bookmark'
   | 'hand'
   | 'shape'
@@ -48,6 +49,7 @@ export const ACTIONS: { id: ActionId; label: string }[] = [
   { id: 'next', label: 'Nästa uppgift' },
   { id: 'prev', label: 'Föregående uppgift' },
   { id: 'calculator', label: 'Miniräknare' },
+  { id: 'graph', label: 'GeoGebra (rita grafer)' },
   { id: 'bookmark', label: 'Spara uppgiften till senare' },
 ]
 
@@ -68,6 +70,7 @@ export const DEFAULT_SHORTCUTS: Record<ActionId, string> = {
   next: 'N',
   prev: 'Shift+N',
   calculator: 'R',
+  graph: 'K',
   bookmark: 'B',
   hand: 'M',
   shape: 'F',
@@ -102,6 +105,8 @@ export interface Settings {
   calculator?: { x: number; y: number }
   /** Miniräknarens läge: den inbyggda eller TI-84-emulatorn. */
   calculatorMode?: 'simple' | 'ti84'
+  /** GeoGebra-fönstrets plats och storlek. */
+  geogebra?: { x: number; y: number; w: number; h: number }
   /** TI-84-emulatorns storlek (1 = 780 px hög). */
   tiScale?: number
   /** Med ritplatta: skrivyta bredvid uppgiften. Utan (standard): allt i en centrerad kolumn och uträkningar med tangentbordet. */

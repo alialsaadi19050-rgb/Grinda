@@ -5,12 +5,14 @@ import { setSubject, subjectOf } from '../subject/subject.ts'
 import { loadContent, type Content } from '../content/load.ts'
 import { MathText } from '../ui/MathText.tsx'
 import { Figures } from '../ui/Figure.tsx'
-import { Bookmark, CalculatorIcon, ChevronLeft, ChevronRight, Collapse, Gear, More, Mute, Send, Sigma, Sound } from '../design/icons.tsx'
+import { Bookmark, CalculatorIcon, ChevronLeft, ChevronRight, Collapse, Gear, GraphIcon, More, Mute, Send, Sigma, Sound } from '../design/icons.tsx'
 import { FormulaDrawer } from '../formulas/FormulaDrawer.tsx'
 import { ShareDialog } from '../social/ShareDialog.tsx'
 import { ReportDialog } from '../admin/ReportDialog.tsx'
 import { useCanInvite } from '../vault/InviteTab.tsx'
 import { Calculator } from '../calculator/Calculator.tsx'
+import { GeoGebraWindow } from '../graph/GeoGebraWindow.tsx'
+import { graphTask } from '../graph/graphTask.ts'
 import { InkSurface, type InkSurfaceHandle } from '../canvas/InkSurface.tsx'
 import { actionForEvent, S620_ASPECT, updateSettings, useSettings } from '../settings/settings.ts'
 import { SettingsDialog } from '../settings/SettingsDialog.tsx'
@@ -36,6 +38,7 @@ export function ExercisePage({ id }: { id: string }) {
   const [problemOpen, setProblemOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [calcOpen, setCalcOpen] = useState(false)
+  const [ggbOpen, setGgbOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [formulasOpen, setFormulasOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -146,6 +149,9 @@ export function ExercisePage({ id }: { id: string }) {
         case 'calculator':
           setCalcOpen((o) => !o)
           break
+        case 'graph':
+          setGgbOpen((o) => !o)
+          break
         case 'bookmark':
           toggleBookmark(id)
           break
@@ -174,6 +180,7 @@ export function ExercisePage({ id }: { id: string }) {
   const plain = !settings.tablet
   const lesson = lessons?.find((l) => l.topic === ex.topic)
   const generator = generatorFor(ex.topic)
+  const graph = graphTask(ex)
 
   // Uppgiften ser likadan ut i båda lägena – bara placeringen skiljer.
   const problem = (
@@ -192,8 +199,13 @@ export function ExercisePage({ id }: { id: string }) {
         </ol>
       </div>
       <Figures figures={ex.figures} />
-      {(lesson || generator) && (
+      {(lesson || generator || graph.graph) && (
         <div className="ex-links">
+          {graph.graph && (
+            <button className="ex-lesson ex-ggb" onClick={() => setGgbOpen(true)} title={`Öppna GeoGebra och rita graferna (${settings.shortcuts.graph})`}>
+              <GraphIcon size={15} /> Rita i GeoGebra
+            </button>
+          )}
           {lesson && (
             <a className="ex-lesson" href={lessonHref(lesson.id, `#/uppgift/${encodeURIComponent(ex.id)}`)} title="Läs bokens teori och exempel – du kommer tillbaka hit efteråt">
               Genomgång: {lesson.title}
@@ -274,6 +286,9 @@ export function ExercisePage({ id }: { id: string }) {
           </button>
           <button className={`ex-icon ${calcOpen ? 'on' : ''}`} onClick={() => setCalcOpen((o) => !o)} aria-label="Miniräknare" aria-pressed={calcOpen} title={`Miniräknare (${settings.shortcuts.calculator})`}>
             <CalculatorIcon size={19} />
+          </button>
+          <button className={`ex-icon ${ggbOpen ? 'on' : ''}`} onClick={() => setGgbOpen((o) => !o)} aria-label="GeoGebra" aria-pressed={ggbOpen} title={`GeoGebra – rita grafer (${settings.shortcuts.graph})`}>
+            <GraphIcon size={19} />
           </button>
           <button className="ex-icon" onClick={() => setShareOpen(true)} aria-label="Dela med en kompis" title="Dela uppgiften (och din uträkning) med en kompis">
             <Send size={18} />
@@ -367,6 +382,7 @@ export function ExercisePage({ id }: { id: string }) {
       )}
 
       <Calculator open={calcOpen} onClose={() => setCalcOpen(false)} noCalculator={ex.calculator === false} />
+      <GeoGebraWindow open={ggbOpen} onClose={() => setGgbOpen(false)} exerciseId={ex.id} task={graph} />
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
       {shareOpen && <ShareDialog ex={ex} onClose={() => setShareOpen(false)} />}
       {formulasOpen && <FormulaDrawer topic={ex.topic} chapter={ex.chapter} onClose={() => setFormulasOpen(false)} />}

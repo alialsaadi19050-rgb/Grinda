@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeoGebra</title>
+    <style>
+      html, body { height: 100%; margin: 0; overflow: hidden; background: #fff; }
+      body { font-family: system-ui, sans-serif; }
+      #ggb { width: 100%; height: 100%; }
+      #msg {
+        position: absolute; inset: 0; display: grid; place-items: center; padding: 24px;
+        text-align: center; color: #555; font-size: 14px; line-height: 1.5; background: #fff;
+      }
+      #msg[hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <div id="ggb"></div>
+    <div id="msg">Laddar GeoGebra …</div>
+    <script>
+      // GeoGebra (grafritaren) inuti Grinda. Sidan körs i en iframe så att GeoGebras egna
+      // tangenter och stilar inte krockar med appens. Appen skickar vilken uppgift som är öppen,
+      // och sidan skickar tillbaka det man ritat (som GeoGebra-XML) så att det sparas per uppgift.
+      const origin = location.origin
+      const msg = document.getElementById('msg')
+      let api = null
+      let current = null
+      let quiet = false
+      let timer = 0
+
+      const post = (m) => parent.postMessage({ source: 'grinda-ggb', ...m }, origin)
+      const fail = (text) => {
+        msg.textContent = text
+        msg.hidden = false
+        post({ type: 'error' })
+      }
+
+      // Det som finns ritat för uppgiften just nu. Tom konstruktion sparas som null.
+      const snapshot = () => (api.getAllObjectNames().length ? api.getXML() : null)
+      const save = () => {
+        clearTimeout(timer)
+        timer = 0
+        if (!api || current === null) return
+        post({ type: 'save', id: current, xml: snapshot() })
+      }
+      const changed = () => {
+        if (quiet) return
+        clearTimeout(timer)
+        timer = setTimeout(save, 700)
+      }
+
+      const setView = (v) => {
+        if (v) api.setCoordSystem(v.xmin, v.xmax, v.ymin, v.ymax)
+      }
+      const blank = (view) => {
+        api.newConstruction()
+        setView(view)
+      }
+
+      const load = ({ id, xml, view }) => {
+        if (!api) return
+        // Spara den förra uppgiften innan den nya laddas.
+        if (timer) save()
+        quiet = true
+        current = id
+        try {
+          if (xml) api.setXML(xml)
+          else blank(view)
+        } catch {
+          blank(view)
+        }
+        setTimeout(() => (quiet = false), 300)
+      }
+
+      window.addEventListener('message', (e) => {
+        if (e.origin !== origin || !e.data || e.data.target !== 'grinda-ggb') return
+        const m = e.data
+        if (m.type === 'load') load(m)
+        else if (m.type === 'reset' && api) {
+          quiet = true
+          blank(m.view)
+          setTimeout(() => (quiet = false), 300)
+          post({ type: 'save', id: current, xml: null })
+        } else if (m.type === 'flush') save()
+      })
+
+      let raf = 0
+      window.addEventListener('resize', () => {
+        cancelAnimationFrame(raf)
+        raf = requestAnimationFrame(() => api && api.setSize(innerWidth, innerHeight))
+      })
+
+      const start = () => {
+        if (!window.GGBApplet) return fail('GeoGebra kunde inte laddas. GeoGebra hämtas från geogebra.org, så du behöver vara uppkopplad.')
+        const applet = new GGBApplet(
+          {
+            appName: 'graphing',
+            width: innerWidth,
+            height: innerHeight,
+            language: 'sv',
+            showToolBar: false,
+            showAlgebraInput: true,
+            showMenuBar: false,
+            showResetIcon: false,
+            showFullscreenButton: false,
+            enableShiftDragZoom: true,
+            enableRightClick: true,
+            enableUndoRedo: true,
+            showZoomButtons: true,
+            // Tangentbordet på skärmen tar halva fönstret; det går att öppna med knappen i GeoGebra.
+            showKeyboardOnFocus: 'false',
+            borderColor: '#ffffff',
+            appletOnLoad: (a) => {
+              api = a
+              for (const reg of ['registerAddListener', 'registerRemoveListener', 'registerUpdateListener', 'registerRenameListener']) {
+                try {
+                  api[reg](changed)
+                } catch {
+                  /* äldre GeoGebra utan just den lyssnaren */
+                }
+              }
+              msg.hidden = true
+              post({ type: 'ready' })
+            },
+          },
+          true,
+        )
+        applet.inject('ggb')
+      }
+
+      const s = document.createElement('script')
+      s.src = 'https://www.geogebra.org/apps/deployggb.js'
+      s.onload = start
+      s.onerror = () => fail('GeoGebra kunde inte laddas. GeoGebra hämtas från geogebra.org, så du behöver vara uppkopplad.')
+      document.head.appendChild(s)
+    </script>
+  </body>
+</html>
